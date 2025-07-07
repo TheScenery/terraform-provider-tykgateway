@@ -13,12 +13,12 @@ type Client struct {
 	HTTPClient *http.Client
 }
 
-func NewClient(host, apiKey string) *Client {
+func NewClient(host, apiKey string) (*Client, error) {
 	return &Client{
 		Host:       host,
 		ApiKey:     apiKey,
 		HTTPClient: &http.Client{Timeout: 10 * time.Second},
-	}
+	}, nil
 }
 
 func (c *Client) doRequest(req *http.Request) ([]byte, error) {

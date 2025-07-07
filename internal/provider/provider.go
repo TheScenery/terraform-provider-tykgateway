@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"terraform-provider-tykgateway/client"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -9,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 var _ provider.Provider = (*tykgatewayProvider)(nil)
@@ -29,19 +31,23 @@ type tykgatewayProvider struct{}
 
 func (p *tykgatewayProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Tyk Gateway provider for managing Tyk Gateway resources.",
 		Attributes: map[string]schema.Attribute{
 			"gateway_url": schema.StringAttribute{
-				Optional: false,
+				Description: "The URL of the Tyk Gateway instance.",
+				Required:    true,
 			},
 			"api_key": schema.StringAttribute{
-				Optional:  false,
-				Sensitive: true,
+				Description: "The API key for authenticating with the Tyk Gateway instance.",
+				Sensitive:   true,
+				Required:    true,
 			},
 		},
 	}
 }
 
 func (p *tykgatewayProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	tflog.Debug(ctx, "Configuring TykGateway provider")
 	// Retrieve provider data from configuration
 	var config tykgatewayProviderModel
 	diags := req.Config.Get(ctx, &config)
@@ -98,10 +104,35 @@ func (p *tykgatewayProvider) Configure(ctx context.Context, req provider.Configu
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	ctx = tflog.SetField(ctx, "gateway url", gatewayUrl)
+	ctx = tflog.SetField(ctx, "api_key", apiKey)
+	tflog.MaskFieldValuesWithFieldKeys(ctx, "api_key")
+
+	tflog.Debug(ctx, "Creating TykGateway client")
+
+	client, err := client.NewClient(gatewayUrl, apiKey)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error creating Tyk Gateway client",
+			"Could not create Tyk Gateway client: "+err.Error(),
+		)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.DataSourceData = client
+	resp.ResourceData = client
+	tflog.Debug(ctx, "TykGateway client created successfully", map[string]interface{}{
+		"gateway_url": gatewayUrl,
+	})
 }
 
 func (p *tykgatewayProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
 	resp.TypeName = "tykgateway"
+	resp.Version = "dev"
 }
 
 func (p *tykgatewayProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
@@ -109,8 +140,5 @@ func (p *tykgatewayProvider) DataSources(ctx context.Context) []func() datasourc
 }
 
 func (p *tykgatewayProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{
-		NewApiResource,
-		NewKeyResource,
-	}
+	return []func() resource.Resource{}
 }
