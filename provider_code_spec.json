@@ -1,0 +1,54 @@
+{
+  "version": "0.1",
+  "provider": {
+    "name": "tykgateway",
+    "schema": {
+      "attributes": [
+        {
+          "name": "gateway_url",
+          "string": {
+            "optional_required": "required",
+            "description": "The URL of the Tyk Gateway instance."
+          }
+        },
+        {
+          "name": "api_key",
+          "string": {
+            "optional_required": "required",
+            "description": "The API key for authenticating with the Tyk Gateway."
+          }
+        }
+      ]
+    }
+  },
+  "resources": [
+    {
+      "name": "tykgateway_key",
+      "schema": {
+        "attributes": [
+          {
+            "name": "key_name",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "The name of the API key."
+            }
+          },
+          {
+            "name": "key_value",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "The value of the API key."
+            }
+          },
+          {
+            "name": "expires_at",
+            "string": {
+              "computed_optional_required": "optional",
+              "description": "The expiration date of the API key in ISO 8601 format."
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
