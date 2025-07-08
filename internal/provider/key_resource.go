@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"terraform-provider-tykgateway/client"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -14,7 +15,9 @@ func NewKeyResource() resource.Resource {
 	return &keyResource{}
 }
 
-type keyResource struct{}
+type keyResource struct {
+	client *client.Client
+}
 
 type keyResourceModel struct {
 	Id types.String `tfsdk:"id"`
@@ -27,8 +30,21 @@ func (r *keyResource) Metadata(ctx context.Context, req resource.MetadataRequest
 func (r *keyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
+			"hashed": schema.BoolAttribute{
+				Description: "Indicates if the key is hashed.",
+				Optional:    true,
+			},
+			"alias": schema.StringAttribute{
+				Description: "An alias for the key.",
+				Optional:    true,
+			},
+			"allowance": schema.Float64Attribute{
+				Description: "The allowance for the key, which is the number of requests allowed.",
+				Optional:    true,
+			},
+			"is_inactive": schema.BoolAttribute{
+				Description: "Indicates if the key is inactive.",
+				Optional:    true,
 			},
 		},
 	}
@@ -48,6 +64,8 @@ func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, re
 
 	// Example data value setting
 	data.Id = types.StringValue("example-id")
+
+	r.client.CreateKey(client.Key{})
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

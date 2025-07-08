@@ -132,7 +132,6 @@ func (p *tykgatewayProvider) Configure(ctx context.Context, req provider.Configu
 
 func (p *tykgatewayProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
 	resp.TypeName = "tykgateway"
-	resp.Version = "dev"
 }
 
 func (p *tykgatewayProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
@@ -140,5 +139,7 @@ func (p *tykgatewayProvider) DataSources(ctx context.Context) []func() datasourc
 }
 
 func (p *tykgatewayProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewKeyResource,
+	}
 }
