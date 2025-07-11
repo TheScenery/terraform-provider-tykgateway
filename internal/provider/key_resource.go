@@ -20,7 +20,43 @@ type keyResource struct {
 }
 
 type keyResourceModel struct {
-	Id types.String `tfsdk:"id"`
+	Hashed                        types.Bool    `tfsdk:"hashed"`
+	AccessRights                  types.Map     `tfsdk:"access_rights"`
+	Alias                         types.String  `tfsdk:"alias"`
+	Allowance                     types.Float64 `tfsdk:"allowance"`
+	ApplyPolicies                 types.List    `tfsdk:"apply_policies"`
+	BasicAuthData                 types.Map     `tfsdk:"basic_auth_data"`
+	Certificate                   types.String  `tfsdk:"certificate"`
+	DataExpires                   types.Int64   `tfsdk:"data_expires"`
+	DateCreated                   types.String  `tfsdk:"date_created"`
+	EnableDetailedRecording       types.Bool    `tfsdk:"enable_detailed_recording"`
+	EnableHTTPSignatureValidation types.Bool    `tfsdk:"enable_http_signature_validation"`
+	Expires                       types.Int64   `tfsdk:"expires"`
+	HMACEnabled                   types.Bool    `tfsdk:"hmac_enabled"`
+	HMACString                    types.String  `tfsdk:"hmac_string"`
+	IDExtractorDeadline           types.Int64   `tfsdk:"id_extractor_deadline"`
+	IsInactive                    types.Bool    `tfsdk:"is_inactive"`
+	JWTData                       types.Map     `tfsdk:"jwt_data"`
+	LastCheck                     types.Int64   `tfsdk:"last_check"`
+	LastUpdated                   types.String  `tfsdk:"last_updated"`
+	MaxQueryDepth                 types.Int64   `tfsdk:"max_query_depth"`
+	MetaData                      types.Map     `tfsdk:"meta_data"`
+	Monitor                       types.Map     `tfsdk:"monitor"`
+	OAuthClientID                 types.String  `tfsdk:"oauth_client_id"`
+	OAuthKeys                     types.Map     `tfsdk:"oauth_keys"`
+	OrgID                         types.String  `tfsdk:"org_id"`
+	Per                           types.Float64 `tfsdk:"per"`
+	QuotaMax                      types.Int64   `tfsdk:"quota_max"`
+	QuotaRemaining                types.Int64   `tfsdk:"quota_remaining"`
+	QuotaRenewalRate              types.Int64   `tfsdk:"quota_renewal_rate"`
+	QuotaRenews                   types.Int64   `tfsdk:"quota_renews"`
+	Rate                          types.Float64 `tfsdk:"rate"`
+	RsaCertificateID              types.String  `tfsdk:"rsa_certificate_id"`
+	SessionLifetime               types.Int64   `tfsdk:"session_lifetime"`
+	Smoothing                     types.Map     `tfsdk:"smoothing"`
+	Tags                          types.List    `tfsdk:"tags"`
+	ThrottleInterval              types.Float64 `tfsdk:"throttle_interval"`
+	ThrottleRetryLimit            types.Int64   `tfsdk:"throttle_retry_limit"`
 }
 
 func (r *keyResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -454,10 +490,6 @@ func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, re
 	}
 
 	// Create API call logic
-
-	// Example data value setting
-	data.Id = types.StringValue("example-id")
-
 	r.client.CreateKey(client.Key{})
 
 	// Save data into Terraform state
