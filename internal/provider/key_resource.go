@@ -86,6 +86,7 @@ var AccessSpec = schema.NestedAttributeObject{
 		"methods": schema.ListAttribute{
 			Description: "List of HTTP methods allowed for the URL.",
 			Optional:    true,
+			ElementType: types.StringType,
 		},
 	},
 }
@@ -410,10 +411,9 @@ func (r *keyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Required:    true,
 				Description: "The maximum depth of queries allowed for the API key.",
 			},
-			"meta_data": schema.MapAttribute{
-				ElementType: types.DynamicType,
-				Optional:    true,
+			"meta_data": schema.DynamicAttribute{
 				Description: "Custom metadata for the key.",
+				Optional:    true,
 			},
 			"monitor": Monitor,
 			"oauth_client_id": schema.StringAttribute{
