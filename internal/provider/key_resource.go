@@ -72,7 +72,7 @@ var GraphqlType = schema.NestedAttributeObject{
 		},
 		"name": schema.StringAttribute{
 			Description: "Name of the allowed type.",
-			Required:    true,
+			Optional:    true,
 		},
 	},
 }
@@ -80,7 +80,7 @@ var GraphqlType = schema.NestedAttributeObject{
 var AccessSpec = schema.NestedAttributeObject{
 	Attributes: map[string]schema.Attribute{
 		"url": schema.StringAttribute{
-			Required:    true,
+			Optional:    true,
 			Description: "URL that is allowed for the key.",
 		},
 		"methods": schema.ListAttribute{
@@ -93,28 +93,28 @@ var AccessSpec = schema.NestedAttributeObject{
 
 var RateLimitSmoothing = schema.MapNestedAttribute{
 	Description: "Smoothing configuration for the method.",
-	Required:    true,
+	Optional:    true,
 	NestedObject: schema.NestedAttributeObject{
 		Attributes: map[string]schema.Attribute{
 			"delay": schema.Int64Attribute{
 				Description: "The delay for ratelimit smoothing",
-				Required:    true,
+				Optional:    true,
 			},
 			"enabled": schema.BoolAttribute{
 				Description: "The enabled for ratelimit smoothing",
-				Required:    true,
+				Optional:    true,
 			},
 			"step": schema.Int64Attribute{
 				Description: "The step for ratelimit smoothing",
-				Required:    true,
+				Optional:    true,
 			},
 			"threshold": schema.Int64Attribute{
 				Description: "The threshold for ratelimit smoothing",
-				Required:    true,
+				Optional:    true,
 			},
 			"trigger": schema.Float64Attribute{
 				Description: "The trigger for ratelimit smoothing",
-				Required:    true,
+				Optional:    true,
 			},
 		},
 	},
@@ -122,16 +122,16 @@ var RateLimitSmoothing = schema.MapNestedAttribute{
 
 var RateLimitType2 = schema.MapNestedAttribute{
 	Description: "Rate limit for the HTTP method.",
-	Required:    true,
+	Optional:    true,
 	NestedObject: schema.NestedAttributeObject{
 		Attributes: map[string]schema.Attribute{
 			"per": schema.Int64Attribute{
 				Description: "Time period for the rate limit, in seconds.",
-				Required:    true,
+				Optional:    true,
 			},
 			"rate": schema.Int64Attribute{
 				Description: "Rate limit for the method, in requests per second.",
-				Required:    true,
+				Optional:    true,
 			},
 			"smoothing": RateLimitSmoothing,
 		},
@@ -142,7 +142,7 @@ var EndpointMethod = schema.NestedAttributeObject{
 	Attributes: map[string]schema.Attribute{
 		"name": schema.StringAttribute{
 			Description: "Name of the HTTP method.",
-			Required:    true,
+			Optional:    true,
 		},
 		"limit": RateLimitType2,
 	},
@@ -150,7 +150,7 @@ var EndpointMethod = schema.NestedAttributeObject{
 
 var EndpointMethods = schema.ListNestedAttribute{
 	Description:  "HTTP methods allowed for the endpoint.",
-	Required:     true,
+	Optional:     true,
 	NestedObject: EndpointMethod,
 }
 
@@ -158,7 +158,7 @@ var Endpoint = schema.NestedAttributeObject{
 	Attributes: map[string]schema.Attribute{
 		"path": schema.StringAttribute{
 			Description: "Path of the endpoint that the key has access to.",
-			Required:    true,
+			Optional:    true,
 		},
 		"methods": EndpointMethods,
 	},
@@ -166,18 +166,18 @@ var Endpoint = schema.NestedAttributeObject{
 
 var Endpoints = schema.ListNestedAttribute{
 	Description:  "List of endpoints that the key has access to.",
-	Required:     true,
+	Optional:     true,
 	NestedObject: Endpoint,
 }
 
 var FieldLimits = schema.MapNestedAttribute{
 	Description: "Limits for the field access rights.",
-	Required:    true,
+	Optional:    true,
 	NestedObject: schema.NestedAttributeObject{
 		Attributes: map[string]schema.Attribute{
 			"max_query_depth": schema.Int64Attribute{
 				Description: "Maximum depth of queries allowed for the field.",
-				Required:    true,
+				Optional:    true,
 			},
 		},
 	},
@@ -187,7 +187,7 @@ var FieldAccessDefinition = schema.NestedAttributeObject{
 	Attributes: map[string]schema.Attribute{
 		"field_name": schema.StringAttribute{
 			Description: "Name of the field.",
-			Required:    true,
+			Optional:    true,
 		},
 		"limits": FieldLimits,
 	},
@@ -195,44 +195,44 @@ var FieldAccessDefinition = schema.NestedAttributeObject{
 
 var APILimit = schema.MapNestedAttribute{
 	Description: "Rate limits for the key.",
-	Required:    true,
+	Optional:    true,
 	NestedObject: schema.NestedAttributeObject{
 		Attributes: map[string]schema.Attribute{
 			"max_query_depth": schema.Int64Attribute{
 				Description: "Maximum depth of queries allowed for the key.",
-				Required:    true,
+				Optional:    true,
 			},
 			"rate": schema.Float64Attribute{
 				Description: "Rate limit for the key, in requests per second.",
-				Required:    true,
+				Optional:    true,
 			},
 			"per": schema.Float64Attribute{
 				Description: "Time period for the rate limit, in seconds.",
-				Required:    true,
+				Optional:    true,
 			},
 			"quota_max": schema.Int64Attribute{
 				Description: "Maximum quota for the key, in requests.",
-				Required:    true,
+				Optional:    true,
 			},
 			"quota_remaining": schema.Int64Attribute{
 				Description: "Remaining quota for the key, in requests.",
-				Required:    true,
+				Optional:    true,
 			},
 			"quota_renewal_rate": schema.Int64Attribute{
 				Description: "Rate at which the quota renews, in requests per second.",
-				Required:    true,
+				Optional:    true,
 			},
 			"quota_renews": schema.Int64Attribute{
 				Description: "Time when the quota renews, in Unix timestamp format.",
-				Required:    true,
+				Optional:    true,
 			},
 			"throttle_interval": schema.Float64Attribute{
 				Description: "Interval for throttling requests, in seconds.",
-				Required:    true,
+				Optional:    true,
 			},
 			"throttle_retry_limit": schema.Int64Attribute{
 				Description: "Number of retries allowed for throttled requests.",
-				Required:    true,
+				Optional:    true,
 			},
 			"smoothing": RateLimitSmoothing,
 		},
@@ -246,7 +246,7 @@ var AccessDefinition = schema.MapNestedAttribute{
 		Attributes: map[string]schema.Attribute{
 			"allowance_scope": schema.StringAttribute{
 				Description: "Scope of the allowance for the key.",
-				Required:    true,
+				Optional:    true,
 			},
 			"allowed_types": schema.ListNestedAttribute{
 				Description:  "List of allowed types for the key.",
@@ -260,15 +260,15 @@ var AccessDefinition = schema.MapNestedAttribute{
 			},
 			"api_id": schema.StringAttribute{
 				Description: "API ID that the key has access to.",
-				Required:    true,
+				Optional:    true,
 			},
 			"api_name": schema.StringAttribute{
 				Description: "Name of the API that the key has access to.",
-				Required:    true,
+				Optional:    true,
 			},
 			"disable_introspection": schema.BoolAttribute{
 				Description: "Whether introspection is disabled for the key.",
-				Required:    true,
+				Optional:    true,
 			},
 			"endpoints": Endpoints,
 			"field_access_rights": schema.ListNestedAttribute{
@@ -293,16 +293,16 @@ var AccessDefinition = schema.MapNestedAttribute{
 
 var BasicAuthData = schema.MapNestedAttribute{
 	Description: "Basic authentication data for the key.",
-	Required:    true,
+	Optional:    true,
 	NestedObject: schema.NestedAttributeObject{
 		Attributes: map[string]schema.Attribute{
 			"hash_type": schema.StringAttribute{
 				Description: "Type of hash used for the basic authentication data.",
-				Required:    true,
+				Optional:    true,
 			},
 			"password": schema.StringAttribute{
 				Description: "Password for the basic authentication data.",
-				Required:    true,
+				Optional:    true,
 			},
 		},
 	},
@@ -310,12 +310,12 @@ var BasicAuthData = schema.MapNestedAttribute{
 
 var JWTData = schema.MapNestedAttribute{
 	Description: "JWT data for the key.",
-	Required:    true,
+	Optional:    true,
 	NestedObject: schema.NestedAttributeObject{
 		Attributes: map[string]schema.Attribute{
 			"secret": schema.StringAttribute{
 				Description: "Secret used for signing the JWT.",
-				Required:    true,
+				Optional:    true,
 			},
 		},
 	},
@@ -323,7 +323,7 @@ var JWTData = schema.MapNestedAttribute{
 
 var Monitor = schema.MapNestedAttribute{
 	Description: "Monitoring configuration for the key.",
-	Required:    true,
+	Optional:    true,
 	NestedObject: schema.NestedAttributeObject{
 		Attributes: map[string]schema.Attribute{
 			"trigger_limits": schema.ListAttribute{
@@ -344,12 +344,12 @@ func (r *keyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 			},
 			"access_rights": AccessDefinition,
 			"alias": schema.StringAttribute{
-				Required:            true,
+				Optional:            true,
 				Description:         "Alias for the key.",
 				MarkdownDescription: "Alias for the key.",
 			},
 			"allowance": schema.Float64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The number of requests allowed for the API key.",
 			},
 			"apply_policies": schema.ListAttribute{
@@ -359,56 +359,56 @@ func (r *keyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 			},
 			"basic_auth_data": BasicAuthData,
 			"certificate": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "Certificate.",
 			},
 			"data_expires": schema.Int64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "Data expiration time.",
 			},
 			"date_created": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The date and time when the API key was created, in Unix timestamp format.",
 			},
 			"enable_detailed_recording": schema.BoolAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "Enable detailed recording.",
 			},
 			"enable_http_signature_validation": schema.BoolAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "Enable HTTP signature validation.",
 			},
 			"expires": schema.Int64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The expiration time of the API key, in Unix timestamp format.",
 			},
 			"hmac_enabled": schema.BoolAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "Whether HMAC is enabled.",
 			},
 			"hmac_string": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "HMAC secret string.",
 			},
 			"id_extractor_deadline": schema.Int64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "ID extractor deadline.",
 			},
 			"is_inactive": schema.BoolAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "Whether the key is inactive.",
 			},
 			"jwt_data": JWTData,
 			"last_check": schema.Int64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The last time the API key was checked, in Unix timestamp format.",
 			},
 			"last_updated": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "Last updated timestamp.",
 			},
 			"max_query_depth": schema.Int64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The maximum depth of queries allowed for the API key.",
 			},
 			"meta_data": schema.DynamicAttribute{
@@ -417,7 +417,7 @@ func (r *keyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 			},
 			"monitor": Monitor,
 			"oauth_client_id": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "OAuth client ID.",
 			},
 			"oauth_keys": schema.MapAttribute{
@@ -426,39 +426,39 @@ func (r *keyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Description: "OAuth keys.",
 			},
 			"org_id": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "Organization ID.",
 			},
 			"per": schema.Float64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The time period for the rate limit, in seconds.",
 			},
 			"quota_max": schema.Int64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The maximum quota for the API key, in requests.",
 			},
 			"quota_remaining": schema.Int64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The remaining quota for the API key, in requests.",
 			},
 			"quota_renewal_rate": schema.Int64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The rate at which the quota renews, in requests per second.",
 			},
 			"quota_renews": schema.Int64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The time when the quota renews, in Unix timestamp format.",
 			},
 			"rate": schema.Float64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The rate limit for the API key, in requests per second.",
 			},
 			"rsa_certificate_id": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "RSA certificate ID.",
 			},
 			"session_lifetime": schema.Int64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "Session lifetime.",
 			},
 			"smoothing": RateLimitSmoothing,
@@ -468,11 +468,11 @@ func (r *keyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Description: "Tags for the key.",
 			},
 			"throttle_interval": schema.Float64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The interval for throttling requests, in seconds.",
 			},
 			"throttle_retry_limit": schema.Int64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The number of retries allowed for throttled requests.",
 			},
 		},
