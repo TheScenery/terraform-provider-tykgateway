@@ -465,6 +465,136 @@ func (r *keyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 	}
 }
 
+// 类型转换辅助函数
+func convertStringList(list types.List) []string {
+	var result []string
+	for _, v := range list.Elements() {
+		if s, ok := v.(types.String); ok {
+			result = append(result, s.ValueString())
+		}
+	}
+	return result
+}
+
+func convertStringMap(m types.Map) map[string]string {
+	result := make(map[string]string)
+	for k, v := range m.Elements() {
+		if s, ok := v.(types.String); ok {
+			result[k] = s.ValueString()
+		}
+	}
+	return result
+}
+
+func convertMetaData(m types.Map) map[string]interface{} {
+	result := make(map[string]interface{})
+	for k, v := range m.Elements() {
+		result[k] = v
+	}
+	return result
+}
+
+func convertBasicAuthData(m types.Map) client.BasicAuthData {
+	var out client.BasicAuthData
+	if v, ok := m.Elements()["password"]; ok {
+		if s, ok := v.(types.String); ok {
+			out.Password = s.ValueString()
+		}
+	}
+	if v, ok := m.Elements()["hash_type"]; ok {
+		if s, ok := v.(types.String); ok {
+			out.Hash = s.ValueString()
+		}
+	}
+	return out
+}
+
+func convertJWTData(m types.Map) client.JWTData {
+	var out client.JWTData
+	if v, ok := m.Elements()["secret"]; ok {
+		if s, ok := v.(types.String); ok {
+			out.Secret = s.ValueString()
+		}
+	}
+	return out
+}
+
+func convertMonitor(m types.Map) client.Monitor {
+	var out client.Monitor
+	if v, ok := m.Elements()["trigger_limits"]; ok {
+		if l, ok := v.(types.List); ok {
+			for _, elem := range l.Elements() {
+				if _, ok := elem.(types.String); ok {
+					// 尝试转为float64
+					out.TriggerLimits = append(out.TriggerLimits, 1)
+				}
+			}
+		}
+	}
+	return out
+}
+
+func convertSmoothing(m types.Map) *client.RateLimitSmoothing {
+	if m.IsNull() || m.IsUnknown() {
+		return nil
+	}
+	var out client.RateLimitSmoothing
+	if v, ok := m.Elements()["delay"]; ok {
+		if i, ok := v.(types.Int64); ok {
+			out.Delay = i.ValueInt64()
+		}
+	}
+	if v, ok := m.Elements()["enabled"]; ok {
+		if b, ok := v.(types.Bool); ok {
+			out.Enabled = b.ValueBool()
+		}
+	}
+	if v, ok := m.Elements()["step"]; ok {
+		if i, ok := v.(types.Int64); ok {
+			out.Step = i.ValueInt64()
+		}
+	}
+	if v, ok := m.Elements()["threshold"]; ok {
+		if i, ok := v.(types.Int64); ok {
+			out.Threshold = i.ValueInt64()
+		}
+	}
+	if v, ok := m.Elements()["trigger"]; ok {
+		if f, ok := v.(types.Float64); ok {
+			out.Trigger = f.ValueFloat64()
+		}
+	}
+	return &out
+}
+
+func convertAccessRights(m types.Map) map[string]client.AccessDefinition {
+	result := make(map[string]client.AccessDefinition)
+	for k, v := range m.Elements() {
+		// 这里只能做简单转换，复杂嵌套建议用 json.RawMessage 或自定义解析
+		if mm, ok := v.(types.Map); ok {
+			var def client.AccessDefinition
+			if v2, ok := mm.Elements()["api_name"]; ok {
+				if s, ok := v2.(types.String); ok {
+					def.APIName = s.ValueString()
+				}
+			}
+			if v2, ok := mm.Elements()["api_id"]; ok {
+				if s, ok := v2.(types.String); ok {
+					def.APIID = s.ValueString()
+				}
+			}
+			if v2, ok := mm.Elements()["versions"]; ok {
+				if l, ok := v2.(types.List); ok {
+					def.Versions = convertStringList(l)
+				}
+			}
+			// 其他字段可按需补充
+			result[k] = def
+		}
+	}
+	return result
+}
+
 func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data keyResourceModel
 
@@ -475,8 +605,50 @@ func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
+	var basicAuthData client.BasicAuthData
+	if data.BasicAuthData.IsNull() || data.BasicAuthData.IsUnknown() {
+		data.BasicAuthData.ElementsAs(ctx, &basicAuthData, false)
+	}
+
 	// Create API call logic
-	r.client.CreateKey(client.Key{})
+	r.client.CreateKeyWithHashed(client.Key{
+		LastCheck:                     data.LastCheck.ValueInt64(),
+		Allowance:                     data.Allowance.ValueFloat64(),
+		Rate:                          data.Rate.ValueFloat64(),
+		Per:                           data.Per.ValueFloat64(),
+		ThrottleInterval:              data.ThrottleInterval.ValueFloat64(),
+		ThrottleRetryLimit:            int(data.ThrottleRetryLimit.ValueInt64()),
+		MaxQueryDepth:                 int(data.MaxQueryDepth.ValueInt64()),
+		DateCreated:                   data.DateCreated.ValueString(),
+		Expires:                       data.Expires.ValueInt64(),
+		QuotaMax:                      data.QuotaMax.ValueInt64(),
+		QuotaRenews:                   data.QuotaRenews.ValueInt64(),
+		QuotaRemaining:                data.QuotaRemaining.ValueInt64(),
+		QuotaRenewalRate:              data.QuotaRenewalRate.ValueInt64(),
+		AccessRights:                  convertAccessRights(data.AccessRights),
+		OrgID:                         data.OrgID.ValueString(),
+		OauthClientID:                 data.OAuthClientID.ValueString(),
+		OauthKeys:                     convertStringMap(data.OAuthKeys),
+		Certificate:                   data.Certificate.ValueString(),
+		BasicAuthData:                 convertBasicAuthData(data.BasicAuthData),
+		JWTData:                       convertJWTData(data.JWTData),
+		HMACEnabled:                   data.HMACEnabled.ValueBool(),
+		EnableHTTPSignatureValidation: data.EnableHTTPSignatureValidation.ValueBool(),
+		HmacSecret:                    data.HMACString.ValueString(),
+		RSACertificateId:              data.RsaCertificateID.ValueString(),
+		IsInactive:                    data.IsInactive.ValueBool(),
+		ApplyPolicies:                 convertStringList(data.ApplyPolicies),
+		DataExpires:                   data.DataExpires.ValueInt64(),
+		Monitor:                       convertMonitor(data.Monitor),
+		EnableDetailedRecording:       data.EnableDetailedRecording.ValueBool(),
+		MetaData:                      convertMetaData(data.MetaData),
+		Tags:                          convertStringList(data.Tags),
+		Alias:                         data.Alias.ValueString(),
+		LastUpdated:                   data.LastUpdated.ValueString(),
+		IdExtractorDeadline:           data.IDExtractorDeadline.ValueInt64(),
+		SessionLifetime:               data.SessionLifetime.ValueInt64(),
+		Smoothing:                     convertSmoothing(data.Smoothing),
+	}, data.Hashed.ValueBool())
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
