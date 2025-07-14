@@ -91,50 +91,46 @@ var AccessSpec = schema.NestedAttributeObject{
 	},
 }
 
-var RateLimitSmoothing = schema.MapNestedAttribute{
+var RateLimitSmoothing = schema.SingleNestedAttribute{
 	Description: "Smoothing configuration for the method.",
 	Optional:    true,
-	NestedObject: schema.NestedAttributeObject{
-		Attributes: map[string]schema.Attribute{
-			"delay": schema.Int64Attribute{
-				Description: "The delay for ratelimit smoothing",
-				Optional:    true,
-			},
-			"enabled": schema.BoolAttribute{
-				Description: "The enabled for ratelimit smoothing",
-				Optional:    true,
-			},
-			"step": schema.Int64Attribute{
-				Description: "The step for ratelimit smoothing",
-				Optional:    true,
-			},
-			"threshold": schema.Int64Attribute{
-				Description: "The threshold for ratelimit smoothing",
-				Optional:    true,
-			},
-			"trigger": schema.Float64Attribute{
-				Description: "The trigger for ratelimit smoothing",
-				Optional:    true,
-			},
+	Attributes: map[string]schema.Attribute{
+		"delay": schema.Int64Attribute{
+			Description: "The delay for ratelimit smoothing",
+			Optional:    true,
+		},
+		"enabled": schema.BoolAttribute{
+			Description: "The enabled for ratelimit smoothing",
+			Optional:    true,
+		},
+		"step": schema.Int64Attribute{
+			Description: "The step for ratelimit smoothing",
+			Optional:    true,
+		},
+		"threshold": schema.Int64Attribute{
+			Description: "The threshold for ratelimit smoothing",
+			Optional:    true,
+		},
+		"trigger": schema.Float64Attribute{
+			Description: "The trigger for ratelimit smoothing",
+			Optional:    true,
 		},
 	},
 }
 
-var RateLimitType2 = schema.MapNestedAttribute{
+var RateLimitType2 = schema.SingleNestedAttribute{
 	Description: "Rate limit for the HTTP method.",
 	Optional:    true,
-	NestedObject: schema.NestedAttributeObject{
-		Attributes: map[string]schema.Attribute{
-			"per": schema.Int64Attribute{
-				Description: "Time period for the rate limit, in seconds.",
-				Optional:    true,
-			},
-			"rate": schema.Int64Attribute{
-				Description: "Rate limit for the method, in requests per second.",
-				Optional:    true,
-			},
-			"smoothing": RateLimitSmoothing,
+	Attributes: map[string]schema.Attribute{
+		"per": schema.Int64Attribute{
+			Description: "Time period for the rate limit, in seconds.",
+			Optional:    true,
 		},
+		"rate": schema.Int64Attribute{
+			Description: "Rate limit for the method, in requests per second.",
+			Optional:    true,
+		},
+		"smoothing": RateLimitSmoothing,
 	},
 }
 
@@ -170,15 +166,13 @@ var Endpoints = schema.ListNestedAttribute{
 	NestedObject: Endpoint,
 }
 
-var FieldLimits = schema.MapNestedAttribute{
+var FieldLimits = schema.SingleNestedAttribute{
 	Description: "Limits for the field access rights.",
 	Optional:    true,
-	NestedObject: schema.NestedAttributeObject{
-		Attributes: map[string]schema.Attribute{
-			"max_query_depth": schema.Int64Attribute{
-				Description: "Maximum depth of queries allowed for the field.",
-				Optional:    true,
-			},
+	Attributes: map[string]schema.Attribute{
+		"max_query_depth": schema.Int64Attribute{
+			Description: "Maximum depth of queries allowed for the field.",
+			Optional:    true,
 		},
 	},
 }
@@ -193,49 +187,47 @@ var FieldAccessDefinition = schema.NestedAttributeObject{
 	},
 }
 
-var APILimit = schema.MapNestedAttribute{
+var APILimit = schema.SingleNestedAttribute{
 	Description: "Rate limits for the key.",
 	Optional:    true,
-	NestedObject: schema.NestedAttributeObject{
-		Attributes: map[string]schema.Attribute{
-			"max_query_depth": schema.Int64Attribute{
-				Description: "Maximum depth of queries allowed for the key.",
-				Optional:    true,
-			},
-			"rate": schema.Float64Attribute{
-				Description: "Rate limit for the key, in requests per second.",
-				Optional:    true,
-			},
-			"per": schema.Float64Attribute{
-				Description: "Time period for the rate limit, in seconds.",
-				Optional:    true,
-			},
-			"quota_max": schema.Int64Attribute{
-				Description: "Maximum quota for the key, in requests.",
-				Optional:    true,
-			},
-			"quota_remaining": schema.Int64Attribute{
-				Description: "Remaining quota for the key, in requests.",
-				Optional:    true,
-			},
-			"quota_renewal_rate": schema.Int64Attribute{
-				Description: "Rate at which the quota renews, in requests per second.",
-				Optional:    true,
-			},
-			"quota_renews": schema.Int64Attribute{
-				Description: "Time when the quota renews, in Unix timestamp format.",
-				Optional:    true,
-			},
-			"throttle_interval": schema.Float64Attribute{
-				Description: "Interval for throttling requests, in seconds.",
-				Optional:    true,
-			},
-			"throttle_retry_limit": schema.Int64Attribute{
-				Description: "Number of retries allowed for throttled requests.",
-				Optional:    true,
-			},
-			"smoothing": RateLimitSmoothing,
+	Attributes: map[string]schema.Attribute{
+		"max_query_depth": schema.Int64Attribute{
+			Description: "Maximum depth of queries allowed for the key.",
+			Optional:    true,
 		},
+		"rate": schema.Float64Attribute{
+			Description: "Rate limit for the key, in requests per second.",
+			Optional:    true,
+		},
+		"per": schema.Float64Attribute{
+			Description: "Time period for the rate limit, in seconds.",
+			Optional:    true,
+		},
+		"quota_max": schema.Int64Attribute{
+			Description: "Maximum quota for the key, in requests.",
+			Optional:    true,
+		},
+		"quota_remaining": schema.Int64Attribute{
+			Description: "Remaining quota for the key, in requests.",
+			Optional:    true,
+		},
+		"quota_renewal_rate": schema.Int64Attribute{
+			Description: "Rate at which the quota renews, in requests per second.",
+			Optional:    true,
+		},
+		"quota_renews": schema.Int64Attribute{
+			Description: "Time when the quota renews, in Unix timestamp format.",
+			Optional:    true,
+		},
+		"throttle_interval": schema.Float64Attribute{
+			Description: "Interval for throttling requests, in seconds.",
+			Optional:    true,
+		},
+		"throttle_retry_limit": schema.Int64Attribute{
+			Description: "Number of retries allowed for throttled requests.",
+			Optional:    true,
+		},
+		"smoothing": RateLimitSmoothing,
 	},
 }
 
@@ -291,46 +283,40 @@ var AccessDefinition = schema.MapNestedAttribute{
 	},
 }
 
-var BasicAuthData = schema.MapNestedAttribute{
+var BasicAuthData = schema.SingleNestedAttribute{
 	Description: "Basic authentication data for the key.",
 	Optional:    true,
-	NestedObject: schema.NestedAttributeObject{
-		Attributes: map[string]schema.Attribute{
-			"hash_type": schema.StringAttribute{
-				Description: "Type of hash used for the basic authentication data.",
-				Optional:    true,
-			},
-			"password": schema.StringAttribute{
-				Description: "Password for the basic authentication data.",
-				Optional:    true,
-			},
+	Attributes: map[string]schema.Attribute{
+		"hash_type": schema.StringAttribute{
+			Description: "Type of hash used for the basic authentication data.",
+			Optional:    true,
+		},
+		"password": schema.StringAttribute{
+			Description: "Password for the basic authentication data.",
+			Optional:    true,
 		},
 	},
 }
 
-var JWTData = schema.MapNestedAttribute{
+var JWTData = schema.SingleNestedAttribute{
 	Description: "JWT data for the key.",
 	Optional:    true,
-	NestedObject: schema.NestedAttributeObject{
-		Attributes: map[string]schema.Attribute{
-			"secret": schema.StringAttribute{
-				Description: "Secret used for signing the JWT.",
-				Optional:    true,
-			},
+	Attributes: map[string]schema.Attribute{
+		"secret": schema.StringAttribute{
+			Description: "Secret used for signing the JWT.",
+			Optional:    true,
 		},
 	},
 }
 
-var Monitor = schema.MapNestedAttribute{
+var Monitor = schema.SingleNestedAttribute{
 	Description: "Monitoring configuration for the key.",
 	Optional:    true,
-	NestedObject: schema.NestedAttributeObject{
-		Attributes: map[string]schema.Attribute{
-			"trigger_limits": schema.ListAttribute{
-				Description: "List of trigger limits for monitoring.",
-				Optional:    true,
-				ElementType: types.StringType,
-			},
+	Attributes: map[string]schema.Attribute{
+		"trigger_limits": schema.ListAttribute{
+			Description: "List of trigger limits for monitoring.",
+			Optional:    true,
+			ElementType: types.StringType,
 		},
 	},
 }
