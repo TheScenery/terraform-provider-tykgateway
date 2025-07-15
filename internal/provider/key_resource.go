@@ -494,21 +494,6 @@ func convertMetaData(m types.Map) map[string]interface{} {
 	return result
 }
 
-func convertBasicAuthData(m types.Map) client.BasicAuthData {
-	var out client.BasicAuthData
-	if v, ok := m.Elements()["password"]; ok {
-		if s, ok := v.(types.String); ok {
-			out.Password = s.ValueString()
-		}
-	}
-	if v, ok := m.Elements()["hash_type"]; ok {
-		if s, ok := v.(types.String); ok {
-			out.Hash = s.ValueString()
-		}
-	}
-	return out
-}
-
 func convertJWTData(m types.Map) client.JWTData {
 	var out client.JWTData
 	if v, ok := m.Elements()["secret"]; ok {
@@ -605,50 +590,107 @@ func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
+	var accessDefinition map[string]client.AccessDefinition
+	resp.Diagnostics.Append(data.AccessRights.ElementsAs(ctx, &accessDefinition, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var oauthKeys map[string]string
+	resp.Diagnostics.Append(data.OAuthKeys.ElementsAs(ctx, &oauthKeys, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	var basicAuthData client.BasicAuthData
-	if data.BasicAuthData.IsNull() || data.BasicAuthData.IsUnknown() {
-		data.BasicAuthData.ElementsAs(ctx, &basicAuthData, false)
+	resp.Diagnostics.Append(data.BasicAuthData.ElementsAs(ctx, &basicAuthData, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var jwtData client.JWTData
+	resp.Diagnostics.Append(data.JWTData.ElementsAs(ctx, &jwtData, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var applyPolicies []string
+	resp.Diagnostics.Append(data.ApplyPolicies.ElementsAs(ctx, &applyPolicies, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var monitor client.Monitor
+	resp.Diagnostics.Append(data.Monitor.ElementsAs(ctx, &monitor, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var metadata map[string]any
+	resp.Diagnostics.Append(data.MetaData.ElementsAs(ctx, &metadata, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var tags []string
+	resp.Diagnostics.Append(data.Tags.ElementsAs(ctx, &tags, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var smoothing client.RateLimitSmoothing
+	resp.Diagnostics.Append(data.Smoothing.ElementsAs(ctx, &smoothing, false)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	// Create API call logic
-	r.client.CreateKeyWithHashed(client.Key{
+	_, err := r.client.CreateKeyWithHashed(client.Key{
 		LastCheck:                     data.LastCheck.ValueInt64(),
 		Allowance:                     data.Allowance.ValueFloat64(),
 		Rate:                          data.Rate.ValueFloat64(),
 		Per:                           data.Per.ValueFloat64(),
 		ThrottleInterval:              data.ThrottleInterval.ValueFloat64(),
-		ThrottleRetryLimit:            int(data.ThrottleRetryLimit.ValueInt64()),
-		MaxQueryDepth:                 int(data.MaxQueryDepth.ValueInt64()),
+		ThrottleRetryLimit:            data.ThrottleRetryLimit.ValueInt64(),
+		MaxQueryDepth:                 data.MaxQueryDepth.ValueInt64(),
 		DateCreated:                   data.DateCreated.ValueString(),
 		Expires:                       data.Expires.ValueInt64(),
 		QuotaMax:                      data.QuotaMax.ValueInt64(),
 		QuotaRenews:                   data.QuotaRenews.ValueInt64(),
 		QuotaRemaining:                data.QuotaRemaining.ValueInt64(),
 		QuotaRenewalRate:              data.QuotaRenewalRate.ValueInt64(),
-		AccessRights:                  convertAccessRights(data.AccessRights),
+		AccessRights:                  accessDefinition,
 		OrgID:                         data.OrgID.ValueString(),
 		OauthClientID:                 data.OAuthClientID.ValueString(),
-		OauthKeys:                     convertStringMap(data.OAuthKeys),
+		OauthKeys:                     oauthKeys,
 		Certificate:                   data.Certificate.ValueString(),
-		BasicAuthData:                 convertBasicAuthData(data.BasicAuthData),
-		JWTData:                       convertJWTData(data.JWTData),
+		BasicAuthData:                 basicAuthData,
+		JWTData:                       jwtData,
 		HMACEnabled:                   data.HMACEnabled.ValueBool(),
 		EnableHTTPSignatureValidation: data.EnableHTTPSignatureValidation.ValueBool(),
 		HmacSecret:                    data.HMACString.ValueString(),
 		RSACertificateId:              data.RsaCertificateID.ValueString(),
 		IsInactive:                    data.IsInactive.ValueBool(),
-		ApplyPolicies:                 convertStringList(data.ApplyPolicies),
+		ApplyPolicies:                 applyPolicies,
 		DataExpires:                   data.DataExpires.ValueInt64(),
-		Monitor:                       convertMonitor(data.Monitor),
+		Monitor:                       monitor,
 		EnableDetailedRecording:       data.EnableDetailedRecording.ValueBool(),
-		MetaData:                      convertMetaData(data.MetaData),
-		Tags:                          convertStringList(data.Tags),
+		MetaData:                      metadata,
+		Tags:                          tags,
 		Alias:                         data.Alias.ValueString(),
 		LastUpdated:                   data.LastUpdated.ValueString(),
 		IdExtractorDeadline:           data.IDExtractorDeadline.ValueInt64(),
 		SessionLifetime:               data.SessionLifetime.ValueInt64(),
-		Smoothing:                     convertSmoothing(data.Smoothing),
+		Smoothing:                     smoothing,
 	}, data.Hashed.ValueBool())
+
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error creating key",
+			"Could not create key, unexpected error: "+err.Error(),
+		)
+		return
+	}
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

@@ -102,8 +102,8 @@ type Key struct {
 	Rate                          float64                     `json:"rate"`
 	Per                           float64                     `json:"per"`
 	ThrottleInterval              float64                     `json:"throttle_interval"`
-	ThrottleRetryLimit            int                         `json:"throttle_retry_limit"`
-	MaxQueryDepth                 int                         `json:"max_query_depth"`
+	ThrottleRetryLimit            int64                       `json:"throttle_retry_limit"`
+	MaxQueryDepth                 int64                       `json:"max_query_depth"`
 	DateCreated                   string                      `json:"date_created"`
 	Expires                       int64                       `json:"expires"`
 	QuotaMax                      int64                       `json:"quota_max"`
@@ -133,7 +133,7 @@ type Key struct {
 	LastUpdated                   string                      `json:"last_updated"`
 	IdExtractorDeadline           int64                       `json:"id_extractor_deadline"`
 	SessionLifetime               int64                       `json:"session_lifetime"`
-	Smoothing                     *RateLimitSmoothing         `json:"smoothing"`
+	Smoothing                     RateLimitSmoothing          `json:"smoothing"`
 }
 
 type ApiModifyKeySuccess struct {
