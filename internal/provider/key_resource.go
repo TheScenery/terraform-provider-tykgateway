@@ -2,14 +2,17 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"terraform-provider-tykgateway/client"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-var _ resource.Resource = (*keyResource)(nil)
+var _ resource.Resource = &keyResource{}
+var _ resource.ResourceWithConfigure = &keyResource{}
 
 func NewKeyResource() resource.Resource {
 	return &keyResource{}
@@ -25,7 +28,7 @@ type keyResourceModel struct {
 	Alias                         types.String  `tfsdk:"alias"`
 	Allowance                     types.Float64 `tfsdk:"allowance"`
 	ApplyPolicies                 types.List    `tfsdk:"apply_policies"`
-	BasicAuthData                 types.Map     `tfsdk:"basic_auth_data"`
+	BasicAuthData                 types.Object  `tfsdk:"basic_auth_data"`
 	Certificate                   types.String  `tfsdk:"certificate"`
 	DataExpires                   types.Int64   `tfsdk:"data_expires"`
 	DateCreated                   types.String  `tfsdk:"date_created"`
@@ -36,12 +39,12 @@ type keyResourceModel struct {
 	HMACString                    types.String  `tfsdk:"hmac_string"`
 	IDExtractorDeadline           types.Int64   `tfsdk:"id_extractor_deadline"`
 	IsInactive                    types.Bool    `tfsdk:"is_inactive"`
-	JWTData                       types.Map     `tfsdk:"jwt_data"`
+	JWTData                       types.Object  `tfsdk:"jwt_data"`
 	LastCheck                     types.Int64   `tfsdk:"last_check"`
 	LastUpdated                   types.String  `tfsdk:"last_updated"`
 	MaxQueryDepth                 types.Int64   `tfsdk:"max_query_depth"`
-	MetaData                      types.Map     `tfsdk:"meta_data"`
-	Monitor                       types.Map     `tfsdk:"monitor"`
+	MetaData                      types.String  `tfsdk:"meta_data"`
+	Monitor                       types.Object  `tfsdk:"monitor"`
 	OAuthClientID                 types.String  `tfsdk:"oauth_client_id"`
 	OAuthKeys                     types.Map     `tfsdk:"oauth_keys"`
 	OrgID                         types.String  `tfsdk:"org_id"`
@@ -53,7 +56,7 @@ type keyResourceModel struct {
 	Rate                          types.Float64 `tfsdk:"rate"`
 	RsaCertificateID              types.String  `tfsdk:"rsa_certificate_id"`
 	SessionLifetime               types.Int64   `tfsdk:"session_lifetime"`
-	Smoothing                     types.Map     `tfsdk:"smoothing"`
+	Smoothing                     types.Object  `tfsdk:"smoothing"`
 	Tags                          types.List    `tfsdk:"tags"`
 	ThrottleInterval              types.Float64 `tfsdk:"throttle_interval"`
 	ThrottleRetryLimit            types.Int64   `tfsdk:"throttle_retry_limit"`
@@ -397,7 +400,7 @@ func (r *keyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Optional:    true,
 				Description: "The maximum depth of queries allowed for the API key.",
 			},
-			"meta_data": schema.DynamicAttribute{
+			"meta_data": schema.StringAttribute{
 				Description: "Custom metadata for the key.",
 				Optional:    true,
 			},
@@ -465,119 +468,28 @@ func (r *keyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 	}
 }
 
-// 类型转换辅助函数
-func convertStringList(list types.List) []string {
-	var result []string
-	for _, v := range list.Elements() {
-		if s, ok := v.(types.String); ok {
-			result = append(result, s.ValueString())
-		}
+func (r *keyResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
 	}
-	return result
-}
 
-func convertStringMap(m types.Map) map[string]string {
-	result := make(map[string]string)
-	for k, v := range m.Elements() {
-		if s, ok := v.(types.String); ok {
-			result[k] = s.ValueString()
-		}
+	client, ok := req.ProviderData.(*client.Client)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Data Source Configure Type",
+			"Expected *client.Client, got something else.",
+		)
+		return
 	}
-	return result
-}
 
-func convertMetaData(m types.Map) map[string]interface{} {
-	result := make(map[string]interface{})
-	for k, v := range m.Elements() {
-		result[k] = v
-	}
-	return result
-}
+	r.client = client
 
-func convertJWTData(m types.Map) client.JWTData {
-	var out client.JWTData
-	if v, ok := m.Elements()["secret"]; ok {
-		if s, ok := v.(types.String); ok {
-			out.Secret = s.ValueString()
-		}
+	if r.client == nil {
+		resp.Diagnostics.AddError(
+			"Client Not Configured",
+			"The client is not configured, please check your provider configuration.",
+		)
 	}
-	return out
-}
-
-func convertMonitor(m types.Map) client.Monitor {
-	var out client.Monitor
-	if v, ok := m.Elements()["trigger_limits"]; ok {
-		if l, ok := v.(types.List); ok {
-			for _, elem := range l.Elements() {
-				if _, ok := elem.(types.String); ok {
-					// 尝试转为float64
-					out.TriggerLimits = append(out.TriggerLimits, 1)
-				}
-			}
-		}
-	}
-	return out
-}
-
-func convertSmoothing(m types.Map) *client.RateLimitSmoothing {
-	if m.IsNull() || m.IsUnknown() {
-		return nil
-	}
-	var out client.RateLimitSmoothing
-	if v, ok := m.Elements()["delay"]; ok {
-		if i, ok := v.(types.Int64); ok {
-			out.Delay = i.ValueInt64()
-		}
-	}
-	if v, ok := m.Elements()["enabled"]; ok {
-		if b, ok := v.(types.Bool); ok {
-			out.Enabled = b.ValueBool()
-		}
-	}
-	if v, ok := m.Elements()["step"]; ok {
-		if i, ok := v.(types.Int64); ok {
-			out.Step = i.ValueInt64()
-		}
-	}
-	if v, ok := m.Elements()["threshold"]; ok {
-		if i, ok := v.(types.Int64); ok {
-			out.Threshold = i.ValueInt64()
-		}
-	}
-	if v, ok := m.Elements()["trigger"]; ok {
-		if f, ok := v.(types.Float64); ok {
-			out.Trigger = f.ValueFloat64()
-		}
-	}
-	return &out
-}
-
-func convertAccessRights(m types.Map) map[string]client.AccessDefinition {
-	result := make(map[string]client.AccessDefinition)
-	for k, v := range m.Elements() {
-		// 这里只能做简单转换，复杂嵌套建议用 json.RawMessage 或自定义解析
-		if mm, ok := v.(types.Map); ok {
-			var def client.AccessDefinition
-			if v2, ok := mm.Elements()["api_name"]; ok {
-				if s, ok := v2.(types.String); ok {
-					def.APIName = s.ValueString()
-				}
-			}
-			if v2, ok := mm.Elements()["api_id"]; ok {
-				if s, ok := v2.(types.String); ok {
-					def.APIID = s.ValueString()
-				}
-			}
-			if v2, ok := mm.Elements()["versions"]; ok {
-				if l, ok := v2.(types.List); ok {
-					def.Versions = convertStringList(l)
-				}
-			}
-			// 其他字段可按需补充
-			result[k] = def
-		}
-	}
-	return result
 }
 
 func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -603,13 +515,13 @@ func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, re
 	}
 
 	var basicAuthData client.BasicAuthData
-	resp.Diagnostics.Append(data.BasicAuthData.ElementsAs(ctx, &basicAuthData, false)...)
+	resp.Diagnostics.Append(data.BasicAuthData.As(ctx, &basicAuthData, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	var jwtData client.JWTData
-	resp.Diagnostics.Append(data.JWTData.ElementsAs(ctx, &jwtData, false)...)
+	resp.Diagnostics.Append(data.JWTData.As(ctx, &jwtData, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -621,13 +533,21 @@ func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, re
 	}
 
 	var monitor client.Monitor
-	resp.Diagnostics.Append(data.Monitor.ElementsAs(ctx, &monitor, false)...)
+	resp.Diagnostics.Append(data.Monitor.As(ctx, &monitor, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	var metadata map[string]any
-	resp.Diagnostics.Append(data.MetaData.ElementsAs(ctx, &metadata, false)...)
+	if !data.MetaData.IsNull() && !data.MetaData.IsUnknown() {
+		err := json.Unmarshal([]byte(data.MetaData.ValueString()), &metadata)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error unmarshalling metadata",
+				"Could not unmarshal metadata JSON: "+err.Error(),
+			)
+		}
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -639,7 +559,7 @@ func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, re
 	}
 
 	var smoothing client.RateLimitSmoothing
-	resp.Diagnostics.Append(data.Smoothing.ElementsAs(ctx, &smoothing, false)...)
+	resp.Diagnostics.Append(data.Smoothing.As(ctx, &smoothing, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
