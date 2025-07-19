@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"terraform-provider-tykgateway/client"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -23,6 +24,8 @@ type keyResource struct {
 }
 
 type keyResourceModel struct {
+	Key                           types.String  `tfsdk:"key"`
+	KeyHash                       types.String  `tfsdk:"key_hash"`
 	Hashed                        types.Bool    `tfsdk:"hashed"`
 	AccessRights                  types.Map     `tfsdk:"access_rights"`
 	Alias                         types.String  `tfsdk:"alias"`
@@ -327,6 +330,16 @@ var Monitor = schema.SingleNestedAttribute{
 func (r *keyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"key": schema.StringAttribute{
+				Description: "The API key.",
+				Computed:    true,
+				Sensitive:   true,
+			},
+			"key_hash": schema.StringAttribute{
+				Description: "The API key hash",
+				Computed:    true,
+				Optional:    true,
+			},
 			"hashed": schema.BoolAttribute{
 				Description: "Indicates if the key is hashed.",
 				Optional:    true,
@@ -565,7 +578,7 @@ func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, re
 	}
 
 	// Create API call logic
-	_, err := r.client.CreateKeyWithHashed(client.Key{
+	createKeyResp, err := r.client.CreateKeyWithHashed(client.Key{
 		LastCheck:                     data.LastCheck.ValueInt64(),
 		Allowance:                     data.Allowance.ValueFloat64(),
 		Rate:                          data.Rate.ValueFloat64(),
@@ -612,8 +625,56 @@ func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
+	data.Key = types.StringValue(createKeyResp.Key)
+	data.KeyHash = types.StringValue(createKeyResp.KeyHash)
+
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func applyKeyDataToModel(ctx context.Context, key client.Key, data *keyResourceModel) diag.Diagnostics {
+	// data.AccessRights, _ = types.MapValueFrom(ctx, AccessDefinition.NestedObjectType(), key.AccessRights)
+	data.Alias = types.StringValue(key.Alias)
+	data.Allowance = types.Float64Value(key.Allowance)
+	data.ApplyPolicies, _ = types.ListValueFrom(ctx, types.StringType, key.ApplyPolicies)
+	// data.BasicAuthData, _ = types.ObjectValueFrom(ctx, BasicAuthData.NestedObjectType(), key.BasicAuthData)
+	data.Certificate = types.StringValue(key.Certificate)
+	data.DataExpires = types.Int64Value(key.DataExpires)
+	data.DateCreated = types.StringValue(key.DateCreated)
+	data.EnableDetailedRecording = types.BoolValue(key.EnableDetailedRecording)
+	data.EnableHTTPSignatureValidation = types.BoolValue(key.EnableHTTPSignatureValidation)
+	data.Expires = types.Int64Value(key.Expires)
+	data.HMACEnabled = types.BoolValue(key.HMACEnabled)
+	data.HMACString = types.StringValue(key.HmacSecret)
+	data.IDExtractorDeadline = types.Int64Value(key.IdExtractorDeadline)
+	data.IsInactive = types.BoolValue(key.IsInactive)
+	// data.JWTData, _ = types.ObjectValueFrom(ctx, JWTData.NestedObjectType(), key.JWTData)
+	data.LastCheck = types.Int64Value(key.LastCheck)
+	data.LastUpdated = types.StringValue(key.LastUpdated)
+	data.MaxQueryDepth = types.Int64Value(key.MaxQueryDepth)
+	if key.MetaData != nil {
+		metaDataJSON, _ := json.Marshal(key.MetaData)
+		data.MetaData = types.StringValue(string(metaDataJSON))
+	} else {
+		data.MetaData = basetypes.NewStringNull()
+	}
+	// data.Monitor, _ = types.ObjectValueFrom(ctx, Monitor.NestedObjectType(), key.Monitor)
+	data.OAuthClientID = types.StringValue(key.OauthClientID)
+	// data.OAuthKeys, _ = types.MapValueFrom(ctx, basetypes.StringType, key.OauthKeys)
+	data.OrgID = types.StringValue(key.OrgID)
+	data.Per = types.Float64Value(key.Per)
+	data.QuotaMax = types.Int64Value(key.QuotaMax)
+	data.QuotaRemaining = types.Int64Value(key.QuotaRemaining)
+	data.QuotaRenewalRate = types.Int64Value(key.QuotaRenewalRate)
+	data.QuotaRenews = types.Int64Value(key.QuotaRenews)
+	data.Rate = types.Float64Value(key.Rate)
+	data.RsaCertificateID = types.StringValue(key.RSACertificateId)
+	data.SessionLifetime = types.Int64Value(key.SessionLifetime)
+	// data.Smoothing, _ = types.ObjectValueFrom(ctx, RateLimitSmoothing.NestedObjectType(), key.Smoothing)
+	data.Tags, _ = types.ListValueFrom(ctx, types.StringType, key.Tags)
+	data.ThrottleInterval = types.Float64Value(key.ThrottleInterval)
+	data.ThrottleRetryLimit = types.Int64Value(key.ThrottleRetryLimit)
+	return nil
 }
 
 func (r *keyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -627,6 +688,26 @@ func (r *keyResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	}
 
 	// Read API call logic
+	keyId := data.Key.ValueString()
+	if data.Hashed.ValueBool() {
+		keyId = data.KeyHash.ValueString()
+	}
+	key, err := r.client.GetKeyWithHashed(keyId, data.Hashed.ValueBool())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error reading key",
+			"Could not read key, unexpected error: "+err.Error(),
+		)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(applyKeyDataToModel(ctx, key, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
