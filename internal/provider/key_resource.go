@@ -505,80 +505,70 @@ func (r *keyResource) Configure(ctx context.Context, req resource.ConfigureReque
 	}
 }
 
-func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data keyResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
+func modelToKey(ctx context.Context, data keyResourceModel) (client.Key, diag.Diagnostics) {
+	var clientKey client.Key
 	var accessDefinition map[string]client.AccessDefinition
-	resp.Diagnostics.Append(data.AccessRights.ElementsAs(ctx, &accessDefinition, false)...)
-	if resp.Diagnostics.HasError() {
-		return
+	diag := data.AccessRights.ElementsAs(ctx, &accessDefinition, false)
+	if diag.HasError() {
+		return clientKey, diag
 	}
 
 	var oauthKeys map[string]string
-	resp.Diagnostics.Append(data.OAuthKeys.ElementsAs(ctx, &oauthKeys, false)...)
-	if resp.Diagnostics.HasError() {
-		return
+	diag = data.OAuthKeys.ElementsAs(ctx, &oauthKeys, false)
+	if diag.HasError() {
+		return clientKey, diag
 	}
 
 	var basicAuthData client.BasicAuthData
-	resp.Diagnostics.Append(data.BasicAuthData.As(ctx, &basicAuthData, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})...)
-	if resp.Diagnostics.HasError() {
-		return
+	diag = data.BasicAuthData.As(ctx, &basicAuthData, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})
+	if diag.HasError() {
+		return clientKey, diag
 	}
 
 	var jwtData client.JWTData
-	resp.Diagnostics.Append(data.JWTData.As(ctx, &jwtData, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})...)
-	if resp.Diagnostics.HasError() {
-		return
+	diag = data.JWTData.As(ctx, &jwtData, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})
+	if diag.HasError() {
+		return clientKey, diag
 	}
 
 	var applyPolicies []string
-	resp.Diagnostics.Append(data.ApplyPolicies.ElementsAs(ctx, &applyPolicies, false)...)
-	if resp.Diagnostics.HasError() {
-		return
+	diag = data.ApplyPolicies.ElementsAs(ctx, &applyPolicies, false)
+	if diag.HasError() {
+		return clientKey, diag
 	}
 
 	var monitor client.Monitor
-	resp.Diagnostics.Append(data.Monitor.As(ctx, &monitor, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})...)
-	if resp.Diagnostics.HasError() {
-		return
+	diag = data.Monitor.As(ctx, &monitor, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})
+	if diag.HasError() {
+		return clientKey, diag
 	}
 
 	var metadata map[string]any
 	if !data.MetaData.IsNull() && !data.MetaData.IsUnknown() {
 		err := json.Unmarshal([]byte(data.MetaData.ValueString()), &metadata)
 		if err != nil {
-			resp.Diagnostics.AddError(
+			diag.AddError(
 				"Error unmarshalling metadata",
-				"Could not unmarshal metadata JSON: "+err.Error(),
-			)
+				"Could not unmarshal metadata JSON: "+err.Error())
 		}
 	}
-	if resp.Diagnostics.HasError() {
-		return
+	if diag.HasError() {
+		return clientKey, diag
 	}
 
 	var tags []string
-	resp.Diagnostics.Append(data.Tags.ElementsAs(ctx, &tags, false)...)
-	if resp.Diagnostics.HasError() {
-		return
+	diag = data.Tags.ElementsAs(ctx, &tags, false)
+	if diag.HasError() {
+		return clientKey, diag
 	}
 
 	var smoothing client.RateLimitSmoothing
-	resp.Diagnostics.Append(data.Smoothing.As(ctx, &smoothing, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})...)
-	if resp.Diagnostics.HasError() {
-		return
+	diag = data.Smoothing.As(ctx, &smoothing, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})
+	if diag.HasError() {
+		return clientKey, diag
 	}
 
-	// Create API call logic
-	createKeyResp, err := r.client.CreateKeyWithHashed(client.Key{
+	return client.Key{
 		LastCheck:                     data.LastCheck.ValueInt64(),
 		Allowance:                     data.Allowance.ValueFloat64(),
 		Rate:                          data.Rate.ValueFloat64(),
@@ -615,7 +605,27 @@ func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, re
 		IdExtractorDeadline:           data.IDExtractorDeadline.ValueInt64(),
 		SessionLifetime:               data.SessionLifetime.ValueInt64(),
 		Smoothing:                     smoothing,
-	}, data.Hashed.ValueBool())
+	}, nil
+}
+
+func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data keyResourceModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	key, diag := modelToKey(ctx, data)
+	if diag.HasError() {
+		resp.Diagnostics.Append(diag...)
+		return
+	}
+
+	// Create API call logic
+	createKeyResp, err := r.client.CreateKeyWithHashed(key, data.Hashed.ValueBool())
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -723,8 +733,24 @@ func (r *keyResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		return
 	}
 
+	key, diag := modelToKey(ctx, data)
+	if diag.HasError() {
+		resp.Diagnostics.Append(diag...)
+		return
+	}
 	// Update API call logic
-
+	keyId := data.Key.ValueString()
+	if data.Hashed.ValueBool() {
+		keyId = data.KeyHash.ValueString()
+	}
+	_, err := r.client.UpdateKeyWithHashed(keyId, key, data.Hashed.ValueBool())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error updating key",
+			"Could not update key, unexpected error: "+err.Error(),
+		)
+		return
+	}
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -740,4 +766,16 @@ func (r *keyResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 	}
 
 	// Delete API call logic
+	keyId := data.Key.ValueString()
+	if data.Hashed.ValueBool() {
+		keyId = data.KeyHash.ValueString()
+	}
+	err := r.client.DeleteKeyWithHashed(keyId, data.Hashed.ValueBool())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error deleting key",
+			"Could not delete key, unexpected error: "+err.Error(),
+		)
+		return
+	}
 }
