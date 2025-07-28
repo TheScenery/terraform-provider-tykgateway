@@ -251,7 +251,7 @@ var AccessDefinition = schema.MapNestedAttribute{
 				Optional:     true,
 				NestedObject: GraphqlType,
 			},
-			"allow_urls": schema.ListNestedAttribute{
+			"allowed_urls": schema.ListNestedAttribute{
 				Description:  "List of allowed URLs for the key.",
 				Optional:     true,
 				NestedObject: AccessSpec,
@@ -508,7 +508,7 @@ func (r *keyResource) Configure(ctx context.Context, req resource.ConfigureReque
 func modelToKey(ctx context.Context, data keyResourceModel) (client.Key, diag.Diagnostics) {
 	var clientKey client.Key
 	var accessDefinition map[string]client.AccessDefinition
-	diag := data.AccessRights.ElementsAs(ctx, &accessDefinition, false)
+	diag := data.AccessRights.ElementsAs(ctx, &accessDefinition, true)
 	if diag.HasError() {
 		return clientKey, diag
 	}

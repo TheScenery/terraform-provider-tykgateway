@@ -10,90 +10,90 @@ import (
 )
 
 type AccessSpec struct {
-	URL     string   `json:"url"`
-	Methods []string `json:"methods"`
+	URL     string   `json:"url" tfsdk:"url"`
+	Methods []string `json:"methods" tfsdk:"methods"` // HTTP methods allowed for this URL
 }
 type RateLimitSmoothing struct {
 	// Enabled indicates if rate limit smoothing is active.
-	Enabled bool `json:"enabled"`
+	Enabled bool `json:"enabled" tfsdk:"enabled"`
 
 	// Threshold is the initial rate limit beyond which smoothing will be applied. It is a count of requests during the `per` interval and should be less than the maximum configured `rate`.
-	Threshold int64 `json:"threshold"`
+	Threshold int64 `json:"threshold" tfsdk:"threshold"`
 
 	// Trigger is a fraction (typically in the range 0.1-1.0) of the step at which point a smoothing event will be emitted as the request rate approaches the current allowance.
-	Trigger float64 `json:"trigger"`
+	Trigger float64 `json:"trigger" tfsdk:"trigger"`
 
 	// Step is the increment by which the current allowance will be increased or decreased each time a smoothing event is emitted.
-	Step int64 `json:"step"`
+	Step int64 `json:"step" tfsdk:"step"`
 
 	// Delay is a hold-off between smoothing events and controls how frequently the current allowance will step up or down (in seconds).
-	Delay int64 `json:"delay"`
+	Delay int64 `json:"delay" tfsdk:"delay"`
 }
 type RateLimit struct {
 	// Rate is the allowed number of requests per interval.
-	Rate float64 `json:"rate"`
+	Rate float64 `json:"rate" tfsdk:"rate"`
 	// Per is the interval at which rate limit is enforced.
-	Per float64 `json:"per"`
+	Per float64 `json:"per" tfsdk:"per"`
 
 	// Smoothing contains rate limit smoothing settings.
-	Smoothing *RateLimitSmoothing `json:"smoothing,omitempty"`
+	Smoothing *RateLimitSmoothing `json:"smoothing,omitempty" tfsdk:"smoothing"`
 }
 type APILimit struct {
 	RateLimit
-	ThrottleInterval   float64 `json:"throttle_interval"`
-	ThrottleRetryLimit int     `json:"throttle_retry_limit"`
-	MaxQueryDepth      int     `json:"max_query_depth"`
-	QuotaMax           int64   `json:"quota_max"`
-	QuotaRenews        int64   `json:"quota_renews"`
-	QuotaRemaining     int64   `json:"quota_remaining"`
-	QuotaRenewalRate   int64   `json:"quota_renewal_rate"`
+	ThrottleInterval   float64 `json:"throttle_interval" tfsdk:"throttle_interval"`
+	ThrottleRetryLimit int     `json:"throttle_retry_limit" tfsdk:"throttle_retry_limit"`
+	MaxQueryDepth      int     `json:"max_query_depth" tfsdk:"max_query_depth"`
+	QuotaMax           int64   `json:"quota_max" tfsdk:"quota_max"`
+	QuotaRenews        int64   `json:"quota_renews" tfsdk:"quota_renews"`
+	QuotaRemaining     int64   `json:"quota_remaining" tfsdk:"quota_remaining"`
+	QuotaRenewalRate   int64   `json:"quota_renewal_rate" tfsdk:"quota_renewal_rate"`
 }
 type FieldAccessDefinition struct {
-	TypeName  string      `json:"type_name"`
-	FieldName string      `json:"field_name"`
-	Limits    FieldLimits `json:"limits"`
+	TypeName  string      `json:"type_name" tfsdk:"type_name"`
+	FieldName string      `json:"field_name" tfsdk:"field_name"`
+	Limits    FieldLimits `json:"limits" tfsdk:"limits"`
 }
 
 type FieldLimits struct {
-	MaxQueryDepth int `json:"max_query_depth"`
+	MaxQueryDepth int `json:"max_query_depth" tfsdk:"max_query_depth"`
 }
 
 type BasicAuthData struct {
-	Password string `json:"password"`
-	Hash     string `json:"hash_type"`
+	Password string `json:"password" tfsdk:"password"`
+	Hash     string `json:"hash_type" tfsdk:"hash_type"`
 }
 
 type JWTData struct {
-	Secret string `json:"secret"`
+	Secret string `json:"secret" tfsdk:"secret"`
 }
 
 type Monitor struct {
-	TriggerLimits []float64 `json:"trigger_limits"`
+	TriggerLimits []float64 `json:"trigger_limits" tfsdk:"trigger_limits"` // List of limits that trigger monitoring
 }
 type Endpoint struct {
-	Path    string          `json:"path,omitempty"`
-	Methods EndpointMethods `json:"methods,omitempty"`
+	Path    string          `json:"path,omitempty" tfsdk:"path"`
+	Methods EndpointMethods `json:"methods,omitempty" tfsdk:"methods"`
 }
 
 type EndpointMethod struct {
-	Name  string    `json:"name,omitempty"`
-	Limit RateLimit `json:"limit,omitempty"`
+	Name  string    `json:"name,omitempty" tfsdk:"name"`
+	Limit RateLimit `json:"limit,omitempty" tfsdk:"limit"`
 }
 
 type EndpointMethods []EndpointMethod
 type Endpoints []Endpoint
 type AccessDefinition struct {
-	APIName              string                  `json:"api_name"`
-	APIID                string                  `json:"api_id"`
-	Versions             []string                `json:"versions"`
-	AllowedURLs          []AccessSpec            `json:"allowed_urls"` // mapped string MUST be a valid regex
-	RestrictedTypes      []graphql.Type          `json:"restricted_types"`
-	AllowedTypes         []graphql.Type          `json:"allowed_types"`
-	Limit                APILimit                `json:"limit"`
-	FieldAccessRights    []FieldAccessDefinition `json:"field_access_rights"`
-	DisableIntrospection bool                    `json:"disable_introspection"`
-	AllowanceScope       string                  `json:"allowance_scope"`
-	Endpoints            Endpoints               `json:"endpoints,omitempty"`
+	APIName              string                  `json:"api_name" tfsdk:"api_name"`
+	APIID                string                  `json:"api_id" tfsdk:"api_id"`
+	Versions             []string                `json:"versions" tfsdk:"versions"`
+	AllowedURLs          []AccessSpec            `json:"allowed_urls" tfsdk:"allowed_urls"`
+	RestrictedTypes      []graphql.Type          `json:"restricted_types" tfsdk:"restricted_types"`
+	AllowedTypes         []graphql.Type          `json:"allowed_types" tfsdk:"allowed_types"`
+	Limit                APILimit                `json:"limit" tfsdk:"limit"`
+	FieldAccessRights    []FieldAccessDefinition `json:"field_access_rights" tfsdk:"field_access_rights"`
+	DisableIntrospection bool                    `json:"disable_introspection" tfsdk:"disable_introspection"`
+	AllowanceScope       string                  `json:"allowance_scope" tfsdk:"allowance_scope"`
+	Endpoints            Endpoints               `json:"endpoints,omitempty" tfsdk:"endpoints"`
 }
 
 type Key struct {
