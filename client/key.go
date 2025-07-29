@@ -10,65 +10,65 @@ import (
 )
 
 type AccessSpec struct {
-	URL     string   `json:"url" tfsdk:"url"`
-	Methods []string `json:"methods" tfsdk:"methods"` // HTTP methods allowed for this URL
+	URL     string   `json:"url,omitempty" tfsdk:"url"`
+	Methods []string `json:"methods,omitempty" tfsdk:"methods"` // HTTP methods allowed for this URL
 }
 type RateLimitSmoothing struct {
 	// Enabled indicates if rate limit smoothing is active.
-	Enabled bool `json:"enabled" tfsdk:"enabled"`
+	Enabled bool `json:"enabled,omitempty" tfsdk:"enabled"`
 
 	// Threshold is the initial rate limit beyond which smoothing will be applied. It is a count of requests during the `per` interval and should be less than the maximum configured `rate`.
-	Threshold int64 `json:"threshold" tfsdk:"threshold"`
+	Threshold int64 `json:"threshold,omitempty" tfsdk:"threshold"`
 
 	// Trigger is a fraction (typically in the range 0.1-1.0) of the step at which point a smoothing event will be emitted as the request rate approaches the current allowance.
-	Trigger float64 `json:"trigger" tfsdk:"trigger"`
+	Trigger float64 `json:"trigger,omitempty" tfsdk:"trigger"`
 
 	// Step is the increment by which the current allowance will be increased or decreased each time a smoothing event is emitted.
-	Step int64 `json:"step" tfsdk:"step"`
+	Step int64 `json:"step,omitempty" tfsdk:"step"`
 
 	// Delay is a hold-off between smoothing events and controls how frequently the current allowance will step up or down (in seconds).
-	Delay int64 `json:"delay" tfsdk:"delay"`
+	Delay int64 `json:"delay,omitempty" tfsdk:"delay"`
 }
 type RateLimit struct {
 	// Rate is the allowed number of requests per interval.
-	Rate float64 `json:"rate" tfsdk:"rate"`
+	Rate float64 `json:"rate,omitempty" tfsdk:"rate"`
 	// Per is the interval at which rate limit is enforced.
-	Per float64 `json:"per" tfsdk:"per"`
+	Per float64 `json:"per,omitempty" tfsdk:"per"`
 
 	// Smoothing contains rate limit smoothing settings.
 	Smoothing *RateLimitSmoothing `json:"smoothing,omitempty" tfsdk:"smoothing"`
 }
 type APILimit struct {
 	RateLimit
-	ThrottleInterval   float64 `json:"throttle_interval" tfsdk:"throttle_interval"`
-	ThrottleRetryLimit int     `json:"throttle_retry_limit" tfsdk:"throttle_retry_limit"`
-	MaxQueryDepth      int     `json:"max_query_depth" tfsdk:"max_query_depth"`
-	QuotaMax           int64   `json:"quota_max" tfsdk:"quota_max"`
-	QuotaRenews        int64   `json:"quota_renews" tfsdk:"quota_renews"`
-	QuotaRemaining     int64   `json:"quota_remaining" tfsdk:"quota_remaining"`
-	QuotaRenewalRate   int64   `json:"quota_renewal_rate" tfsdk:"quota_renewal_rate"`
+	ThrottleInterval   float64 `json:"throttle_interval,omitempty" tfsdk:"throttle_interval"`
+	ThrottleRetryLimit int     `json:"throttle_retry_limit,omitempty" tfsdk:"throttle_retry_limit"`
+	MaxQueryDepth      int     `json:"max_query_depth,omitempty" tfsdk:"max_query_depth"`
+	QuotaMax           int64   `json:"quota_max,omitempty" tfsdk:"quota_max"`
+	QuotaRenews        int64   `json:"quota_renews,omitempty" tfsdk:"quota_renews"`
+	QuotaRemaining     int64   `json:"quota_remaining,omitempty" tfsdk:"quota_remaining"`
+	QuotaRenewalRate   int64   `json:"quota_renewal_rate,omitempty" tfsdk:"quota_renewal_rate"`
 }
 type FieldAccessDefinition struct {
-	TypeName  string      `json:"type_name" tfsdk:"type_name"`
-	FieldName string      `json:"field_name" tfsdk:"field_name"`
-	Limits    FieldLimits `json:"limits" tfsdk:"limits"`
+	TypeName  string      `json:"type_name,omitempty" tfsdk:"type_name"`
+	FieldName string      `json:"field_name,omitempty" tfsdk:"field_name"`
+	Limits    FieldLimits `json:"limits,omitempty" tfsdk:"limits"`
 }
 
 type FieldLimits struct {
-	MaxQueryDepth int `json:"max_query_depth" tfsdk:"max_query_depth"`
+	MaxQueryDepth int `json:"max_query_depth,omitempty" tfsdk:"max_query_depth"`
 }
 
 type BasicAuthData struct {
-	Password string `json:"password" tfsdk:"password"`
-	Hash     string `json:"hash_type" tfsdk:"hash_type"`
+	Password string `json:"password,omitempty" tfsdk:"password"`
+	Hash     string `json:"hash_type,omitempty" tfsdk:"hash_type"`
 }
 
 type JWTData struct {
-	Secret string `json:"secret" tfsdk:"secret"`
+	Secret string `json:"secret,omitempty" tfsdk:"secret"`
 }
 
 type Monitor struct {
-	TriggerLimits []float64 `json:"trigger_limits" tfsdk:"trigger_limits"` // List of limits that trigger monitoring
+	TriggerLimits []float64 `json:"trigger_limits,omitempty" tfsdk:"trigger_limits"` // List of limits that trigger monitoring
 }
 type Endpoint struct {
 	Path    string          `json:"path,omitempty" tfsdk:"path"`
@@ -83,57 +83,57 @@ type EndpointMethod struct {
 type EndpointMethods []EndpointMethod
 type Endpoints []Endpoint
 type AccessDefinition struct {
-	APIName              string                  `json:"api_name" tfsdk:"api_name"`
-	APIID                string                  `json:"api_id" tfsdk:"api_id"`
-	Versions             []string                `json:"versions" tfsdk:"versions"`
-	AllowedURLs          []AccessSpec            `json:"allowed_urls" tfsdk:"allowed_urls"`
-	RestrictedTypes      []graphql.Type          `json:"restricted_types" tfsdk:"restricted_types"`
-	AllowedTypes         []graphql.Type          `json:"allowed_types" tfsdk:"allowed_types"`
-	Limit                APILimit                `json:"limit" tfsdk:"limit"`
-	FieldAccessRights    []FieldAccessDefinition `json:"field_access_rights" tfsdk:"field_access_rights"`
-	DisableIntrospection bool                    `json:"disable_introspection" tfsdk:"disable_introspection"`
-	AllowanceScope       string                  `json:"allowance_scope" tfsdk:"allowance_scope"`
+	APIName              string                  `json:"api_name,omitempty" tfsdk:"api_name"`
+	APIID                string                  `json:"api_id,omitempty" tfsdk:"api_id"`
+	Versions             []string                `json:"versions,omitempty" tfsdk:"versions"`
+	AllowedURLs          []AccessSpec            `json:"allowed_urls,omitempty" tfsdk:"allowed_urls"`
+	RestrictedTypes      []graphql.Type          `json:"restricted_types,omitempty" tfsdk:"restricted_types"`
+	AllowedTypes         []graphql.Type          `json:"allowed_types,omitempty" tfsdk:"allowed_types"`
+	Limit                APILimit                `json:"limit,omitempty" tfsdk:"limit"`
+	FieldAccessRights    []FieldAccessDefinition `json:"field_access_rights,omitempty" tfsdk:"field_access_rights"`
+	DisableIntrospection bool                    `json:"disable_introspection,omitempty" tfsdk:"disable_introspection"`
+	AllowanceScope       string                  `json:"allowance_scope,omitempty" tfsdk:"allowance_scope"`
 	Endpoints            Endpoints               `json:"endpoints,omitempty" tfsdk:"endpoints"`
 }
 
 type Key struct {
-	LastCheck                     int64                       `json:"last_check"`
-	Allowance                     float64                     `json:"allowance"`
-	Rate                          float64                     `json:"rate"`
-	Per                           float64                     `json:"per"`
-	ThrottleInterval              float64                     `json:"throttle_interval"`
-	ThrottleRetryLimit            int64                       `json:"throttle_retry_limit"`
-	MaxQueryDepth                 int64                       `json:"max_query_depth"`
-	DateCreated                   string                      `json:"date_created"`
-	Expires                       int64                       `json:"expires"`
-	QuotaMax                      int64                       `json:"quota_max"`
-	QuotaRenews                   int64                       `json:"quota_renews"`
-	QuotaRemaining                int64                       `json:"quota_remaining"`
-	QuotaRenewalRate              int64                       `json:"quota_renewal_rate"`
-	AccessRights                  map[string]AccessDefinition `json:"access_rights"`
-	OrgID                         string                      `json:"org_id"`
-	OauthClientID                 string                      `json:"oauth_client_id"`
-	OauthKeys                     map[string]string           `json:"oauth_keys"`
-	Certificate                   string                      `json:"certificate"`
-	BasicAuthData                 BasicAuthData               `json:"basic_auth_data"`
-	JWTData                       JWTData                     `json:"jwt_data"`
-	HMACEnabled                   bool                        `json:"hmac_enabled"`
-	EnableHTTPSignatureValidation bool                        `json:"enable_http_signature_validation"`
-	HmacSecret                    string                      `json:"hmac_string"`
-	RSACertificateId              string                      `json:"rsa_certificate_id"`
-	IsInactive                    bool                        `json:"is_inactive"`
-	ApplyPolicyID                 string                      `json:"apply_policy_id"`
-	ApplyPolicies                 []string                    `json:"apply_policies"`
-	DataExpires                   int64                       `json:"data_expires"`
-	Monitor                       Monitor                     `json:"monitor"`
-	EnableDetailedRecording       bool                        `json:"enable_detailed_recording"`
-	MetaData                      map[string]interface{}      `json:"meta_data"`
-	Tags                          []string                    `json:"tags"`
-	Alias                         string                      `json:"alias"`
-	LastUpdated                   string                      `json:"last_updated"`
-	IdExtractorDeadline           int64                       `json:"id_extractor_deadline"`
-	SessionLifetime               int64                       `json:"session_lifetime"`
-	Smoothing                     RateLimitSmoothing          `json:"smoothing"`
+	LastCheck                     int64                       `json:"last_check,omitempty"`
+	Allowance                     float64                     `json:"allowance,omitempty"`
+	Rate                          float64                     `json:"rate,omitempty"`
+	Per                           float64                     `json:"per,omitempty"`
+	ThrottleInterval              float64                     `json:"throttle_interval,omitempty"`
+	ThrottleRetryLimit            int64                       `json:"throttle_retry_limit,omitempty"`
+	MaxQueryDepth                 int64                       `json:"max_query_depth,omitempty"`
+	DateCreated                   string                      `json:"date_created,omitempty"`
+	Expires                       int64                       `json:"expires,omitempty"`
+	QuotaMax                      int64                       `json:"quota_max,omitempty"`
+	QuotaRenews                   int64                       `json:"quota_renews,omitempty"`
+	QuotaRemaining                int64                       `json:"quota_remaining,omitempty"`
+	QuotaRenewalRate              int64                       `json:"quota_renewal_rate,omitempty"`
+	AccessRights                  map[string]AccessDefinition `json:"access_rights,omitempty"`
+	OrgID                         string                      `json:"org_id,omitempty"`
+	OauthClientID                 string                      `json:"oauth_client_id,omitempty"`
+	OauthKeys                     map[string]string           `json:"oauth_keys,omitempty"`
+	Certificate                   string                      `json:"certificate,omitempty"`
+	BasicAuthData                 BasicAuthData               `json:"basic_auth_data,omitempty"`
+	JWTData                       JWTData                     `json:"jwt_data,omitempty"`
+	HMACEnabled                   bool                        `json:"hmac_enabled,omitempty"`
+	EnableHTTPSignatureValidation bool                        `json:"enable_http_signature_validation,omitempty"`
+	HmacSecret                    string                      `json:"hmac_string,omitempty"`
+	RSACertificateId              string                      `json:"rsa_certificate_id,omitempty"`
+	IsInactive                    bool                        `json:"is_inactive,omitempty"`
+	ApplyPolicyID                 string                      `json:"apply_policy_id,omitempty"`
+	ApplyPolicies                 []string                    `json:"apply_policies,omitempty"`
+	DataExpires                   int64                       `json:"data_expires,omitempty"`
+	Monitor                       Monitor                     `json:"monitor,omitempty"`
+	EnableDetailedRecording       bool                        `json:"enable_detailed_recording,omitempty"`
+	MetaData                      map[string]interface{}      `json:"meta_data,omitempty"`
+	Tags                          []string                    `json:"tags,omitempty"`
+	Alias                         string                      `json:"alias,omitempty"`
+	LastUpdated                   string                      `json:"last_updated,omitempty"`
+	IdExtractorDeadline           int64                       `json:"id_extractor_deadline,omitempty"`
+	SessionLifetime               int64                       `json:"session_lifetime,omitempty"`
+	Smoothing                     RateLimitSmoothing          `json:"smoothing,omitempty"`
 }
 
 type ApiModifyKeySuccess struct {

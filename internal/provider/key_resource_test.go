@@ -16,11 +16,7 @@ func TestAccKeyResource(t *testing.T) {
 			{
 				Config: providerConfig + `
 resource "tykgateway_key" "key1" {
-  allowance   = 1000
-  rate         = 1000
-  per          = 1
-  quota_max    = 10000
-  quota_renews = 1688131200
+  hashed=true
   org_id       = "default"
   access_rights = {
     httpbin-api = {
