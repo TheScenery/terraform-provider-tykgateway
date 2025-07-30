@@ -643,11 +643,15 @@ func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, re
 }
 
 func applyKeyDataToModel(ctx context.Context, key client.Key, data *keyResourceModel) diag.Diagnostics {
-	// data.AccessRights, _ = types.MapValueFrom(ctx, AccessDefinition.NestedObjectType(), key.AccessRights)
+	accessRights, diag := types.MapValueFrom(ctx, AccessDefinition.GetType(), key.AccessRights)
+	if diag.HasError() {
+		return diag
+	}
+	data.AccessRights = accessRights
 	data.Alias = types.StringValue(key.Alias)
 	data.Allowance = types.Float64Value(key.Allowance)
 	data.ApplyPolicies, _ = types.ListValueFrom(ctx, types.StringType, key.ApplyPolicies)
-	// data.BasicAuthData, _ = types.ObjectValueFrom(ctx, BasicAuthData.NestedObjectType(), key.BasicAuthData)
+	// data.BasicAuthData, _ = types.ObjectValueFrom(ctx, BasicAuthData.GetAttributes(), key.BasicAuthData)
 	data.Certificate = types.StringValue(key.Certificate)
 	data.DataExpires = types.Int64Value(key.DataExpires)
 	data.DateCreated = types.StringValue(key.DateCreated)
@@ -670,7 +674,7 @@ func applyKeyDataToModel(ctx context.Context, key client.Key, data *keyResourceM
 	}
 	// data.Monitor, _ = types.ObjectValueFrom(ctx, Monitor.NestedObjectType(), key.Monitor)
 	data.OAuthClientID = types.StringValue(key.OauthClientID)
-	// data.OAuthKeys, _ = types.MapValueFrom(ctx, basetypes.StringType, key.OauthKeys)
+	data.OAuthKeys, _ = types.MapValueFrom(ctx, types.StringType, key.OauthKeys)
 	data.OrgID = types.StringValue(key.OrgID)
 	data.Per = types.Float64Value(key.Per)
 	data.QuotaMax = types.Int64Value(key.QuotaMax)
