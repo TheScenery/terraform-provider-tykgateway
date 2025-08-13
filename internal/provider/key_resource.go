@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"terraform-provider-tykgateway/client"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -642,6 +643,10 @@ func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, re
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+func getAttributeTypes(value schema.SingleNestedAttribute) map[string]attr.Type {
+	return value.GetType().(basetypes.ObjectType).AttrTypes
+}
+
 func applyKeyDataToModel(ctx context.Context, key client.Key, data *keyResourceModel) diag.Diagnostics {
 	accessRights, diag := types.MapValueFrom(ctx, AccessDefinition.GetType(), key.AccessRights)
 	if diag.HasError() {
@@ -650,8 +655,14 @@ func applyKeyDataToModel(ctx context.Context, key client.Key, data *keyResourceM
 	data.AccessRights = accessRights
 	data.Alias = types.StringValue(key.Alias)
 	data.Allowance = types.Float64Value(key.Allowance)
-	data.ApplyPolicies, _ = types.ListValueFrom(ctx, types.StringType, key.ApplyPolicies)
-	// data.BasicAuthData, _ = types.ObjectValueFrom(ctx, BasicAuthData.GetAttributes(), key.BasicAuthData)
+	data.ApplyPolicies, diag = types.ListValueFrom(ctx, types.StringType, key.ApplyPolicies)
+	if diag.HasError() {
+		return diag
+	}
+	data.BasicAuthData, diag = types.ObjectValueFrom(ctx, getAttributeTypes(BasicAuthData), key.BasicAuthData)
+	if diag.HasError() {
+		return diag
+	}
 	data.Certificate = types.StringValue(key.Certificate)
 	data.DataExpires = types.Int64Value(key.DataExpires)
 	data.DateCreated = types.StringValue(key.DateCreated)
@@ -662,7 +673,10 @@ func applyKeyDataToModel(ctx context.Context, key client.Key, data *keyResourceM
 	data.HMACString = types.StringValue(key.HmacSecret)
 	data.IDExtractorDeadline = types.Int64Value(key.IdExtractorDeadline)
 	data.IsInactive = types.BoolValue(key.IsInactive)
-	// data.JWTData, _ = types.ObjectValueFrom(ctx, JWTData.NestedObjectType(), key.JWTData)
+	data.JWTData, diag = types.ObjectValueFrom(ctx, getAttributeTypes(JWTData), key.JWTData)
+	if diag.HasError() {
+		return diag
+	}
 	data.LastCheck = types.Int64Value(key.LastCheck)
 	data.LastUpdated = types.StringValue(key.LastUpdated)
 	data.MaxQueryDepth = types.Int64Value(key.MaxQueryDepth)
@@ -672,9 +686,15 @@ func applyKeyDataToModel(ctx context.Context, key client.Key, data *keyResourceM
 	} else {
 		data.MetaData = basetypes.NewStringNull()
 	}
-	// data.Monitor, _ = types.ObjectValueFrom(ctx, Monitor.NestedObjectType(), key.Monitor)
+	data.Monitor, diag = types.ObjectValueFrom(ctx, getAttributeTypes(Monitor), key.Monitor)
+	if diag.HasError() {
+		return diag
+	}
 	data.OAuthClientID = types.StringValue(key.OauthClientID)
-	data.OAuthKeys, _ = types.MapValueFrom(ctx, types.StringType, key.OauthKeys)
+	data.OAuthKeys, diag = types.MapValueFrom(ctx, types.StringType, key.OauthKeys)
+	if diag.HasError() {
+		return diag
+	}
 	data.OrgID = types.StringValue(key.OrgID)
 	data.Per = types.Float64Value(key.Per)
 	data.QuotaMax = types.Int64Value(key.QuotaMax)
@@ -684,8 +704,14 @@ func applyKeyDataToModel(ctx context.Context, key client.Key, data *keyResourceM
 	data.Rate = types.Float64Value(key.Rate)
 	data.RsaCertificateID = types.StringValue(key.RSACertificateId)
 	data.SessionLifetime = types.Int64Value(key.SessionLifetime)
-	// data.Smoothing, _ = types.ObjectValueFrom(ctx, RateLimitSmoothing.NestedObjectType(), key.Smoothing)
-	data.Tags, _ = types.ListValueFrom(ctx, types.StringType, key.Tags)
+	data.Smoothing, diag = types.ObjectValueFrom(ctx, getAttributeTypes(RateLimitSmoothing), key.Smoothing)
+	if diag.HasError() {
+		return diag
+	}
+	data.Tags, diag = types.ListValueFrom(ctx, types.StringType, key.Tags)
+	if diag.HasError() {
+		return diag
+	}
 	data.ThrottleInterval = types.Float64Value(key.ThrottleInterval)
 	data.ThrottleRetryLimit = types.Int64Value(key.ThrottleRetryLimit)
 	return nil
