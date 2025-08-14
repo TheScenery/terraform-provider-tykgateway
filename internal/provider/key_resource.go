@@ -647,7 +647,7 @@ func getAttributeTypes(value schema.SingleNestedAttribute) map[string]attr.Type 
 	return value.GetType().(basetypes.ObjectType).AttrTypes
 }
 
-func applyKeyDataToModel(ctx context.Context, key client.Key, data *keyResourceModel) diag.Diagnostics {
+func keyToModel(ctx context.Context, key client.Key, data *keyResourceModel) diag.Diagnostics {
 	accessRights, diag := types.MapValueFrom(ctx, AccessDefinition.GetType(), key.AccessRights)
 	if diag.HasError() {
 		return diag
@@ -744,7 +744,7 @@ func (r *keyResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	resp.Diagnostics.Append(applyKeyDataToModel(ctx, key, &data)...)
+	resp.Diagnostics.Append(keyToModel(ctx, key, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
