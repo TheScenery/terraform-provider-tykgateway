@@ -26,7 +26,7 @@ resource "tykgateway_key" "key1" {
   }
 }`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("tykgateway_key.test_key", "alias", "example222"),
+					resource.TestCheckResourceAttr("tykgateway_key.key1", "org_id", "default"),
 				),
 			},
 		},

@@ -96,45 +96,7 @@ type AccessDefinition struct {
 	Endpoints            Endpoints               `json:"endpoints,omitempty" tfsdk:"endpoints"`
 }
 
-type Key struct {
-	LastCheck                     int64                       `json:"last_check,omitempty"`
-	Allowance                     float64                     `json:"allowance,omitempty"`
-	Rate                          float64                     `json:"rate,omitempty"`
-	Per                           float64                     `json:"per,omitempty"`
-	ThrottleInterval              float64                     `json:"throttle_interval,omitempty"`
-	ThrottleRetryLimit            int64                       `json:"throttle_retry_limit,omitempty"`
-	MaxQueryDepth                 int64                       `json:"max_query_depth,omitempty"`
-	DateCreated                   string                      `json:"date_created,omitempty"`
-	Expires                       int64                       `json:"expires,omitempty"`
-	QuotaMax                      int64                       `json:"quota_max,omitempty"`
-	QuotaRenews                   int64                       `json:"quota_renews,omitempty"`
-	QuotaRemaining                int64                       `json:"quota_remaining,omitempty"`
-	QuotaRenewalRate              int64                       `json:"quota_renewal_rate,omitempty"`
-	AccessRights                  map[string]AccessDefinition `json:"access_rights,omitempty"`
-	OrgID                         string                      `json:"org_id,omitempty"`
-	OauthClientID                 string                      `json:"oauth_client_id,omitempty"`
-	OauthKeys                     map[string]string           `json:"oauth_keys,omitempty"`
-	Certificate                   string                      `json:"certificate,omitempty"`
-	BasicAuthData                 BasicAuthData               `json:"basic_auth_data,omitempty"`
-	JWTData                       JWTData                     `json:"jwt_data,omitempty"`
-	HMACEnabled                   bool                        `json:"hmac_enabled,omitempty"`
-	EnableHTTPSignatureValidation bool                        `json:"enable_http_signature_validation,omitempty"`
-	HmacSecret                    string                      `json:"hmac_string,omitempty"`
-	RSACertificateId              string                      `json:"rsa_certificate_id,omitempty"`
-	IsInactive                    bool                        `json:"is_inactive,omitempty"`
-	ApplyPolicyID                 string                      `json:"apply_policy_id,omitempty"`
-	ApplyPolicies                 []string                    `json:"apply_policies,omitempty"`
-	DataExpires                   int64                       `json:"data_expires,omitempty"`
-	Monitor                       Monitor                     `json:"monitor,omitempty"`
-	EnableDetailedRecording       bool                        `json:"enable_detailed_recording,omitempty"`
-	MetaData                      map[string]interface{}      `json:"meta_data,omitempty"`
-	Tags                          []string                    `json:"tags,omitempty"`
-	Alias                         string                      `json:"alias,omitempty"`
-	LastUpdated                   string                      `json:"last_updated,omitempty"`
-	IdExtractorDeadline           int64                       `json:"id_extractor_deadline,omitempty"`
-	SessionLifetime               int64                       `json:"session_lifetime,omitempty"`
-	Smoothing                     RateLimitSmoothing          `json:"smoothing,omitempty"`
-}
+type Key map[string]any
 
 type ApiModifyKeySuccess struct {
 	Key     string `json:"key"`
