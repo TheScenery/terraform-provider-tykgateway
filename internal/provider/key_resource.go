@@ -21,12 +21,11 @@ type keyResource struct {
 	client *client.Client
 }
 
-const KEY = "key"
-const KEY_HASH = "key_hash"
-
 type keyResourceModel struct {
-	Hashed types.Bool   `tfsdk:"hashed"`
-	Key    types.String `tfsdk:"key"`
+	Hashed    types.Bool   `tfsdk:"hashed"`
+	KeyConfig types.String `tfsdk:"key_config"`
+	Key       types.String `tfsdk:"key"`
+	KeyHash   types.String `tfsdk:"key_hash"`
 }
 
 func (r *keyResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -40,8 +39,16 @@ func (r *keyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Description: "Indicates if the key is hashed.",
 				Optional:    true,
 			},
+			"key_config": schema.StringAttribute{
+				Description: "The key config json string",
+				Required:    true,
+			},
 			"key": schema.StringAttribute{
-				Description: "The key request json string",
+				Description: "The key.",
+				Computed:    true,
+			},
+			"key_hash": schema.StringAttribute{
+				Description: "The key hash.",
 				Computed:    true,
 			},
 		},
@@ -83,7 +90,7 @@ func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, re
 	}
 
 	var key map[string]any
-	err := json.Unmarshal([]byte(data.Key.ValueString()), &key)
+	err := json.Unmarshal([]byte(data.KeyConfig.ValueString()), &key)
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -104,19 +111,8 @@ func (r *keyResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
-	key[KEY] = createKeyResponse.Key
-	key[KEY_HASH] = createKeyResponse.KeyHash
-
-	updatedKey, err := json.Marshal(key)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error marshalling key JSON",
-			"Could not marshal key JSON, unexpected error: "+err.Error(),
-		)
-		return
-	}
-
-	data.Key = types.StringValue(string(updatedKey))
+	data.Key = types.StringValue(createKeyResponse.Key)
+	data.KeyHash = types.StringValue(createKeyResponse.KeyHash)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -132,44 +128,20 @@ func (r *keyResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	var key map[string]any
-	err := json.Unmarshal([]byte(data.Key.ValueString()), &key)
-
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error parsing key JSON",
-			"Could not parse key JSON, unexpected error: "+err.Error(),
-		)
-		return
-	}
-
 	// Read API call logic
-	keyId := key[KEY].(string)
+	keyId := data.Key.ValueString()
 	if data.Hashed.ValueBool() {
-		keyId = key[KEY_HASH].(string)
+		keyId = data.KeyHash.ValueString()
 	}
-	keyResponse, err := r.client.GetKeyWithHashed(keyId, data.Hashed.ValueBool())
+	_, err := r.client.GetKeyWithHashed(keyId, data.Hashed.ValueBool())
 	if err != nil {
+		// TODO: check for 404 Not Found error and remove from state
 		resp.Diagnostics.AddError(
 			"Error reading key",
 			"Could not read key, unexpected error: "+err.Error(),
 		)
-	}
-
-	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	updatedKey, err := json.Marshal(keyResponse)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error marshalling key JSON",
-			"Could not marshal key JSON, unexpected error: "+err.Error(),
-		)
-		return
-	}
-
-	data.Key = types.StringValue(string(updatedKey))
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -186,7 +158,7 @@ func (r *keyResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	}
 
 	var key map[string]any
-	err := json.Unmarshal([]byte(data.Key.ValueString()), &key)
+	err := json.Unmarshal([]byte(data.KeyConfig.ValueString()), &key)
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -197,9 +169,9 @@ func (r *keyResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	}
 
 	// Update API call logic
-	keyId := key[KEY].(string)
+	keyId := data.Key.ValueString()
 	if data.Hashed.ValueBool() {
-		keyId = key[KEY_HASH].(string)
+		keyId = data.KeyHash.ValueString()
 	}
 	_, err = r.client.UpdateKeyWithHashed(keyId, key, data.Hashed.ValueBool())
 	if err != nil {
@@ -224,7 +196,7 @@ func (r *keyResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 	}
 
 	var key map[string]any
-	err := json.Unmarshal([]byte(data.Key.ValueString()), &key)
+	err := json.Unmarshal([]byte(data.KeyConfig.ValueString()), &key)
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -235,9 +207,9 @@ func (r *keyResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 	}
 
 	// Delete API call logic
-	keyId := key[KEY].(string)
+	keyId := data.Key.ValueString()
 	if data.Hashed.ValueBool() {
-		keyId = key[KEY_HASH].(string)
+		keyId = data.KeyHash.ValueString()
 	}
 	err = r.client.DeleteKeyWithHashed(keyId, data.Hashed.ValueBool())
 	if err != nil {

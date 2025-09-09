@@ -16,17 +16,20 @@ func TestAccKeyResource(t *testing.T) {
 			{
 				Config: providerConfig + `
 resource "tykgateway_key" "key1" {
-  hashed=true
-  org_id       = "default"
-  access_rights = {
-    httpbin-api = {
-      api_id   = "httpbin-api"
-      api_name = "Httpbin API"
-    }
-  }
+  hashed = true
+  key_config = jsonencode(
+	{
+		"org_id": "default",
+		"access_rights": {
+			"httpbin-api": {
+				"api_id": "httpbin-api",
+				"api_name": "Httpbin API"
+			}
+		}
+	})
 }`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("tykgateway_key.key1", "org_id", "default"),
+					resource.TestCheckResourceAttr("tykgateway_key.key1", "hashed", "true"),
 				),
 			},
 		},
