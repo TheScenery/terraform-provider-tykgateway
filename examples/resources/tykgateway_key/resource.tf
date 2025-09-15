@@ -1,17 +1,6 @@
-terraform {
-  required_providers {
-    tykgateway = {
-      source = "github.com/thescenery/tykgateway"
-    }
-  }
-}
+# Copyright (c) HashiCorp, Inc.
 
-provider "tykgateway" {
-  gateway_url = "http://192.168.5.119/tyk-gateway"
-  api_key     = "foo"
-}
-
-resource "tykgateway_key" "key1" {
+resource "tykgateway_key" "key" {
   key_config = jsonencode(
     {
       "allowance" : 1000,
