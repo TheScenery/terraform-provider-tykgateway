@@ -2,13 +2,13 @@ module terraform-provider-tykgateway
 
 go 1.24.4
 
-require github.com/hashicorp/terraform-plugin-framework v1.15.0
+require github.com/hashicorp/terraform-plugin-framework v1.15.1
 
 require (
 	github.com/TykTechnologies/graphql-go-tools v1.6.2-0.20250606091303-a8e1ade2da8e
 	github.com/hashicorp/terraform-plugin-go v0.28.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
-	github.com/hashicorp/terraform-plugin-testing v1.13.2
+	github.com/hashicorp/terraform-plugin-testing v1.13.3
 )
 
 require (
